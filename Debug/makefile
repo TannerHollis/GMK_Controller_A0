@@ -9,21 +9,21 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include XPD_USB/subdir.mk
--include USBDevice-master/Device/subdir.mk
--include USBDevice-master/Class/MSC/subdir.mk
--include USBDevice-master/Class/HID/subdir.mk
--include USBDevice-master/Class/DFU/subdir.mk
--include USBDevice-master/Class/CDC/subdir.mk
--include Hardware_Libraries/RotaryEncoder/subdir.mk
--include Hardware_Libraries/Joystick/subdir.mk
--include Hardware_Libraries/ButtonSwitch/subdir.mk
+-include Drivers/XPD_USB/subdir.mk
+-include Drivers/USBDevice-master/Device/subdir.mk
+-include Drivers/USBDevice-master/Class/MSC/subdir.mk
+-include Drivers/USBDevice-master/Class/HID/subdir.mk
+-include Drivers/USBDevice-master/Class/DFU/subdir.mk
+-include Drivers/USBDevice-master/Class/CDC/subdir.mk
+-include Drivers/Serial_Comm/subdir.mk
 -include Drivers/STM32F4xx_HAL_Driver/Src/subdir.mk
+-include Drivers/RotaryEncoder/subdir.mk
+-include Drivers/Joystick/subdir.mk
+-include Drivers/Controller_Config/subdir.mk
+-include Drivers/ButtonSwitch/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
--include Core/Serial_Comm/subdir.mk
 -include Core/Inc/subdir.mk
--include Core/Controller_Config/subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)

@@ -43,6 +43,8 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
+#define EVENT_BUFFER_LENGTH 128
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -100,6 +102,7 @@ void Error_Handler(void);
 #define SW_LT_GPIO_Port GPIOA
 #define ENCODER_A_Pin GPIO_PIN_15
 #define ENCODER_A_GPIO_Port GPIOA
+#define ENCODER_A_EXTI_IRQn EXTI15_10_IRQn
 #define ENCODER_B_Pin GPIO_PIN_3
 #define ENCODER_B_GPIO_Port GPIOB
 #define SW_X_Pin GPIO_PIN_4

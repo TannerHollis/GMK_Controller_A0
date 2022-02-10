@@ -29,6 +29,7 @@
 #include "Serial_Comm.h"
 #include "Joystick.h"
 #include "ButtonSwitch.h"
+#include "RotaryEncoder.h"
 
 /* USER CODE END Includes */
 
@@ -54,16 +55,30 @@ typedef struct {
 		uint8_t _reserved : 4;
 	} buttons;
 	struct {
-		uint16_t js_l_x;
-		uint16_t js_l_y;
-		uint16_t js_r_x;
-		uint16_t js_r_y;
+		struct {
+			int16_t x;
+			int16_t y;
+		} left;
+		struct {
+			int16_t x;
+			int16_t y;
+		} right;
 	} joysticks;
 	struct {
 		uint8_t left;
 		uint8_t right;
 	} triggers;
 } Controller_HandleTypeDef;
+
+typedef enum {
+	EVENT_WAIT,
+	TIM_EVENT_1,
+	TIM_EVENT_2,
+	TIM_EVENT_3,
+	TIM_EVENT_4,
+	ADC_EVENT_UPDATE,
+	GPIO_EVENT_ENCODER_UPDATE
+} State_TypeDef;
 
 /* USER CODE END PTD */
 
@@ -87,10 +102,17 @@ TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 
+//Create event buffer to store events to process
+State_TypeDef event_state[EVENT_BUFFER_LENGTH];
+uint8_t event_index_read = 0;
+uint8_t event_index_write = 0;
+
 Controller_HandleTypeDef controller;
 
 Joystick_HandleTypeDef joystick_l;
 Joystick_HandleTypeDef joystick_r;
+
+RotaryEncoder_HandleTypeDef rotary_encoder;
 
 ButtonSwitch_HandleTypeDef button_a;
 ButtonSwitch_HandleTypeDef button_b;
@@ -121,7 +143,9 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
+void FormatControllerData();
 void UpdateAllButtons();
+void write_next_event_state(State_TypeDef next_state);
 
 /* USER CODE END PFP */
 
@@ -183,6 +207,9 @@ int main(void)
   joystick_l = Joystick_Init(&(adc_buffer[0]), &(adc_buffer[1]));
   joystick_r = Joystick_Init(&(adc_buffer[2]), &(adc_buffer[3]));
 
+  //Initialize RotaryEncoder
+  rotary_encoder = RotaryEncoder_Init(&htim2, ENCODER_A_GPIO_Port, ENCODER_A_Pin, ENCODER_B_GPIO_Port, ENCODER_B_Pin);
+
   //Initialize ButtonSwitches
   button_a = ButtonSwitch_Init(&htim2, SW_A_GPIO_Port, SW_A_Pin, GPIO_PIN_RESET);
   button_b = ButtonSwitch_Init(&htim2, SW_B_GPIO_Port, SW_B_Pin, GPIO_PIN_RESET);
@@ -203,9 +230,42 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  //Initialize the event state buffer
+  for(uint8_t i = 0; i < EVENT_BUFFER_LENGTH; i++){
+	  event_state[i] = EVENT_WAIT;
+  }
   while (1)
   {
-	Serial_Comm_CheckMessages();
+	switch(event_state[event_index_read]){
+		case EVENT_WAIT:
+			//Read Button States
+			UpdateAllButtons();
+			break;
+		case TIM_EVENT_1:
+			//Trigger Joystick ADC read
+			HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4);
+			break;
+		case TIM_EVENT_2:
+			break;
+		case TIM_EVENT_3:
+			FormatControllerData();
+			break;
+		case TIM_EVENT_4:
+			_write(0, &controller, sizeof(controller));
+			break;
+		case ADC_EVENT_UPDATE:
+			Joystick_Update(&joystick_l);
+			Joystick_Update(&joystick_r);
+			break;
+		case GPIO_EVENT_ENCODER_UPDATE:
+			RotaryEncoder_Update(&rotary_encoder);
+			break;
+	}
+	event_state[event_index_read] = EVENT_WAIT;
+	if(event_index_read != event_index_write){
+		event_index_read = (event_index_read + 1) & EVENT_BUFFER_LENGTH;
+	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -576,35 +636,41 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ENCODER_A_Pin */
   GPIO_InitStruct.Pin = ENCODER_A_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ENCODER_A_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ENCODER_B_Pin */
   GPIO_InitStruct.Pin = ENCODER_B_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ENCODER_B_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
 /* USER CODE BEGIN 4 */
 
+//Format Controller data before output through USB
 void FormatControllerData(){
-	controller.buttons.a = button_a.is_short_press;
-	controller.buttons.b = button_b.is_short_press;
-	controller.buttons.x = button_x.is_short_press;
-	controller.buttons.y = button_y.is_short_press;
-	controller.buttons.lb = button_lb.is_short_press;
-	controller.buttons.rb = button_rb.is_short_press;
-	controller.buttons.lth = button_lth.is_short_press;
-	controller.buttons.rth = button_rth.is_short_press;
-	controller.buttons.left = button_left.is_short_press;
-	controller.buttons.right = button_right.is_short_press;
-	controller.buttons.start = button_start.is_short_press;
-	controller.buttons.back = button_back.is_short_press;
+	controller.buttons.a = button_a.is_held;
+	controller.buttons.b = button_b.is_held;
+	controller.buttons.x = button_x.is_held;
+	controller.buttons.y = button_y.is_held;
+	controller.buttons.lb = button_lb.is_held;
+	controller.buttons.rb = button_rb.is_held;
+	controller.buttons.lth = button_lth.is_held;
+	controller.buttons.rth = button_rth.is_held;
+	controller.buttons.left = button_left.is_held;
+	controller.buttons.right = button_right.is_held;
+	controller.buttons.start = button_start.is_held;
+	controller.buttons.back = button_back.is_held;
 }
 
+//Update button status
 void UpdateAllButtons(){
 	ButtonSwitch_Update(&button_a);
 	ButtonSwitch_Update(&button_b);
@@ -622,31 +688,38 @@ void UpdateAllButtons(){
 	ButtonSwitch_Update(&button_rt);
 }
 
+//Increment event_index_write and write to next event_state in buffer
+void write_next_event_state(State_TypeDef next_state){
+	event_index_write = (event_index_write + 1) & EVENT_BUFFER_LENGTH;
+	event_state[event_index_write] = next_state;
+}
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc){
-	Joystick_Update(&joystick_l);
-	Joystick_Update(&joystick_r);
+	write_next_event_state(ADC_EVENT_UPDATE);
 }
 
 void HAL_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
-	//If channel 1 has triggered, trigger joystick read
-	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
-		HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4);
-		UpdateAllButtons();
+	switch(htim->Channel){
+		case HAL_TIM_ACTIVE_CHANNEL_1:
+			write_next_event_state(TIM_EVENT_1);
+			break;
+		case HAL_TIM_ACTIVE_CHANNEL_2:
+			write_next_event_state(TIM_EVENT_2);
+			break;
+		case HAL_TIM_ACTIVE_CHANNEL_3:
+			write_next_event_state(TIM_EVENT_3);
+			break;
+		case HAL_TIM_ACTIVE_CHANNEL_4:
+			write_next_event_state(TIM_EVENT_4);
+			break;
+		default:
+			break;
 	}
+}
 
-	//If channel 2 has triggered, trigger rotary encoder read
-	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2){
-		UpdateAllButtons();
-	}
-
-	//If channel 3 has triggered, trigger button read and format data
-	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3){
-		UpdateAllButtons();
-	}
-
-	//If channel 4 has triggered, send data over USB
-	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4){
-		_write(0, &controller, sizeof(controller));
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if(GPIO_Pin == ENCODER_A_Pin || GPIO_Pin == ENCODER_B_Pin){
+		write_next_event_state(GPIO_EVENT_ENCODER_UPDATE);
 	}
 }
 

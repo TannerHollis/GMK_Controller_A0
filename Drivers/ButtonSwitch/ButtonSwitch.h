@@ -11,7 +11,7 @@
 #include "main.h"
 
 //Define standard timer freq and times (ms)
-#define BTTNSWITCH_UPDATE_FREQ 200.0f
+#define BTTNSWITCH_UPDATE_FREQ 1000.0f
 #define BTTNSWITCH_DEBOUNCE 20.0f
 #define BTTNSWITCH_LONG_PRESS 50000.0f
 

@@ -10,8 +10,8 @@
 
 #include "main.h"
 
-#define ROTARYENCODER_UPDATE_TIM_FREQ 1600.0f
-#define ROTARYENCODER_PPR 20.0f
+#define ROTARYENCODER_UPDATE_TIM_FREQ 1000.0f
+#define ROTARYENCODER_PPR 24.0f
 
 typedef enum{
 	NONE,

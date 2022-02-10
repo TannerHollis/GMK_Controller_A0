@@ -31,6 +31,7 @@ ButtonSwitch_HandleTypeDef ButtonSwitch_Init(TIM_HandleTypeDef *htim, GPIO_TypeD
 	bs.normal_state = normal_state;
 	bs.is_long_press = 0;
 	bs.is_short_press = 0;
+	bs.is_held = 0;
 	bs.update_freq = BTTNSWITCH_UPDATE_FREQ;
 	ButtonSwitch_SetDebounce(&bs, BTTNSWITCH_DEBOUNCE);
 	ButtonSwitch_SetLongPress(&bs, BTTNSWITCH_LONG_PRESS);
@@ -114,6 +115,9 @@ void ButtonSwitch_Update(ButtonSwitch_HandleTypeDef *bs){
 	else if(state != bs->normal_state && is_debounce && is_long_press){
 		bs->is_long_press = is_long_press;
 	}
+
+	//Check if button is held
+	bs->is_held = state != bs->normal_state && is_debounce;
 }
 
 /**
