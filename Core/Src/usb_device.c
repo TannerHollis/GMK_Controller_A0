@@ -26,21 +26,28 @@
 /** @brief USB device configuration */
 const USBD_DescriptionType hdev_cfg = {
     .Vendor = {
-        .Name           = "STMicroelectronics",
+        .Name           = "GMK",
         .ID             = 0x0483,
     },
     .Product = {
-        .Name           = "STM32 Virtual ComPort",
+        .Name           = "GMK Controller",
         .ID             = 0x5740,
         .Version.bcd    = 0x0100,
     },
     .Config = {
-        .Name           = "STM32 Virtual ComPort config",
+        .Name           = "GMK Controller Configuration",
         .MaxCurrent_mA  = 100,
         .RemoteWakeup   = 0,
         .SelfPowered    = 0,
     },
 }, *const dev_cfg = &hdev_cfg;
+
+const USBD_CDC_LineCodingType lc = {
+		.DTERate = 9600,
+		.CharFormat = 1,
+		.ParityType = 1,
+		.DataBits = 8,
+};
 
 USBD_HandleType hUsbDevice, *const UsbDevice = &hUsbDevice;
 
@@ -52,6 +59,7 @@ void UsbDevice_Init(void)
     console_if->Config.InEpNum  = 0x81;
     console_if->Config.OutEpNum = 0x01;
     console_if->Config.NotEpNum = 0x82;
+    console_if->LineCoding = lc;
 
     /* Mount the interfaces to the device */
     USBD_CDC_MountInterface(console_if, UsbDevice);
