@@ -171,6 +171,7 @@ int main(void)
 
   //Start Timer
   HAL_TIM_Base_Start(&htim1);
+  HAL_TIM_Base_Start(&htim2);
 
   //Start OC Timer channels 1 through 4
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1 | TIM_CHANNEL_2 | TIM_CHANNEL_3 | TIM_CHANNEL_4);
