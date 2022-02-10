@@ -642,7 +642,7 @@ void HAL_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
 
 	//If channel 4 has triggered, send data over USB
 	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4){
-		_write(0, (uint8_t *)controller, sizeof(controller));
+		_write(0, &controller, sizeof(controller));
 	}
 }
 
