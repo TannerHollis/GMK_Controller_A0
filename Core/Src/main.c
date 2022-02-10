@@ -202,6 +202,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	Serial_Comm_ParseMessages();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

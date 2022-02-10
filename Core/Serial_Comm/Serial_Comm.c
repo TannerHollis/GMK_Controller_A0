@@ -16,7 +16,7 @@ void Serial_Comm_CheckMessages(){
 	uint8_t retval;
 
 	//Read from buffer
-	retval = _read(0, &buffer_in, sizeof(buffer_in));
+	retval = _read(0, (uint8_t *)buffer_in, sizeof(buffer_in));
 
 	//Parse, if valid message length
 	if(retval == 65){
@@ -33,10 +33,11 @@ void Serial_Comm_CheckMessages(){
  * 			2. 0x1X = Write Profile X
  */
 void Serial_Comm_ParseMessages(){
-	if(buffer_in[0] & 0x00 == 0x00){
-
+	if((buffer_in[0] & 0x00) == 0x00){
+		char message[] = "GMK Controller, Let's GO BABY!\n";
+		_write(0, (uint8_t *)message, strlen(message));
 	}
-	else if(buffer_in[0] & 0x10 == 0x10){
+	else if((buffer_in[0] & 0x10) == 0x10){
 
 	}
 }
