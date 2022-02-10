@@ -50,8 +50,8 @@ typedef struct {
 		uint8_t left : 1;
 		uint8_t right : 1;
 		uint8_t start : 1;
-		uint8_t select : 1;
-		uint8_t _reserved : 5;
+		uint8_t back : 1;
+		uint8_t _reserved : 4;
 	} buttons;
 	struct {
 		uint16_t js_l_x;
@@ -83,12 +83,29 @@ DMA_HandleTypeDef hdma_adc1;
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 
 Controller_HandleTypeDef controller;
+
 Joystick_HandleTypeDef joystick_l;
 Joystick_HandleTypeDef joystick_r;
+
+ButtonSwitch_HandleTypeDef button_a;
+ButtonSwitch_HandleTypeDef button_b;
+ButtonSwitch_HandleTypeDef button_x;
+ButtonSwitch_HandleTypeDef button_y;
+ButtonSwitch_HandleTypeDef button_lb;
+ButtonSwitch_HandleTypeDef button_rb;
+ButtonSwitch_HandleTypeDef button_lth;
+ButtonSwitch_HandleTypeDef button_rth;
+ButtonSwitch_HandleTypeDef button_left;
+ButtonSwitch_HandleTypeDef button_right;
+ButtonSwitch_HandleTypeDef button_start;
+ButtonSwitch_HandleTypeDef button_back;
+ButtonSwitch_HandleTypeDef button_lt;
+ButtonSwitch_HandleTypeDef button_rt;
 
 uint16_t adc_buffer[4];
 
@@ -101,7 +118,10 @@ static void MX_ADC1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
+
+void UpdateAllButtons();
 
 /* USER CODE END PFP */
 
@@ -142,6 +162,7 @@ int main(void)
   MX_SPI1_Init();
   MX_DMA_Init();
   MX_TIM1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   //Initialize USB
@@ -157,6 +178,22 @@ int main(void)
   //Initialize Joysticks
   joystick_l = Joystick_Init(&(adc_buffer[0]), &(adc_buffer[1]));
   joystick_r = Joystick_Init(&(adc_buffer[2]), &(adc_buffer[3]));
+
+  //Initialize ButtonSwitches
+  button_a = ButtonSwitch_Init(&htim2, SW_A_GPIO_Port, SW_A_Pin, GPIO_PIN_RESET);
+  button_b = ButtonSwitch_Init(&htim2, SW_B_GPIO_Port, SW_B_Pin, GPIO_PIN_RESET);
+  button_x = ButtonSwitch_Init(&htim2, SW_X_GPIO_Port, SW_X_Pin, GPIO_PIN_RESET);
+  button_y = ButtonSwitch_Init(&htim2, SW_Y_GPIO_Port, SW_Y_Pin, GPIO_PIN_RESET);
+  button_lb = ButtonSwitch_Init(&htim2, SW_LB_GPIO_Port, SW_LB_Pin, GPIO_PIN_RESET);
+  button_rb = ButtonSwitch_Init(&htim2, SW_RB_GPIO_Port, SW_RB_Pin, GPIO_PIN_RESET);
+  button_lth = ButtonSwitch_Init(&htim2, SW_LTH_GPIO_Port, SW_LTH_Pin, GPIO_PIN_RESET);
+  button_rth = ButtonSwitch_Init(&htim2, SW_RTH_GPIO_Port, SW_RTH_Pin, GPIO_PIN_RESET);
+  button_left = ButtonSwitch_Init(&htim2, SW_LEFT_GPIO_Port, SW_LEFT_Pin, GPIO_PIN_RESET);
+  button_right = ButtonSwitch_Init(&htim2, SW_RIGHT_GPIO_Port, SW_RIGHT_Pin, GPIO_PIN_RESET);
+  button_start = ButtonSwitch_Init(&htim2, SW_START_GPIO_Port, SW_START_Pin, GPIO_PIN_RESET);
+  button_back = ButtonSwitch_Init(&htim2, SW_BACK_GPIO_Port, SW_BACK_Pin, GPIO_PIN_RESET);
+  button_lt = ButtonSwitch_Init(&htim2, SW_LT_GPIO_Port, SW_LT_Pin, GPIO_PIN_RESET);
+  button_rt = ButtonSwitch_Init(&htim2, SW_RT_GPIO_Port, SW_RT_Pin, GPIO_PIN_RESET);
 
   /* USER CODE END 2 */
 
@@ -417,6 +454,51 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 35999;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 4294967295;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -503,6 +585,38 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+void FormatControllerData(){
+	controller.buttons.a = button_a.is_short_press;
+	controller.buttons.b = button_b.is_short_press;
+	controller.buttons.x = button_x.is_short_press;
+	controller.buttons.y = button_y.is_short_press;
+	controller.buttons.lb = button_lb.is_short_press;
+	controller.buttons.rb = button_rb.is_short_press;
+	controller.buttons.lth = button_lth.is_short_press;
+	controller.buttons.rth = button_rth.is_short_press;
+	controller.buttons.left = button_left.is_short_press;
+	controller.buttons.right = button_right.is_short_press;
+	controller.buttons.start = button_start.is_short_press;
+	controller.buttons.back = button_back.is_short_press;
+}
+
+void UpdateAllButtons(){
+	ButtonSwitch_Update(&button_a);
+	ButtonSwitch_Update(&button_b);
+	ButtonSwitch_Update(&button_x);
+	ButtonSwitch_Update(&button_y);
+	ButtonSwitch_Update(&button_lb);
+	ButtonSwitch_Update(&button_rb);
+	ButtonSwitch_Update(&button_lth);
+	ButtonSwitch_Update(&button_rth);
+	ButtonSwitch_Update(&button_left);
+	ButtonSwitch_Update(&button_right);
+	ButtonSwitch_Update(&button_start);
+	ButtonSwitch_Update(&button_back);
+	ButtonSwitch_Update(&button_lt);
+	ButtonSwitch_Update(&button_rt);
+}
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc){
 	Joystick_Update(&joystick_l);
 	Joystick_Update(&joystick_r);
@@ -512,21 +626,22 @@ void HAL_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
 	//If channel 1 has triggered, trigger joystick read
 	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
 		HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4);
+		UpdateAllButtons();
 	}
 
 	//If channel 2 has triggered, trigger rotary encoder read
 	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2){
-
+		UpdateAllButtons();
 	}
 
 	//If channel 3 has triggered, trigger button read and format data
 	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3){
-
+		UpdateAllButtons();
 	}
 
 	//If channel 4 has triggered, send data over USB
-	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
-		_write(0, (uint8_t *)adc_buffer, sizeof(adc_buffer));
+	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4){
+		_write(0, (uint8_t *)controller, sizeof(controller));
 	}
 }
 

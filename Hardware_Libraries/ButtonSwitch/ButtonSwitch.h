@@ -12,8 +12,8 @@
 
 //Define standard timer freq and times (ms)
 #define BTTNSWITCH_UPDATE_FREQ 200.0f
-#define BTTNSWITCH_DEBOUNCE 100.0f
-#define BTTNSWITCH_LONG_PRESS 1250.0f
+#define BTTNSWITCH_DEBOUNCE 20.0f
+#define BTTNSWITCH_LONG_PRESS 50000.0f
 
 typedef struct {
 	TIM_HandleTypeDef *update_tim;
@@ -24,6 +24,7 @@ typedef struct {
 	GPIO_PinState normal_state;
 	uint8_t is_long_press;
 	uint8_t is_short_press;
+	uint8_t is_held; // TODO: Program button "is held" condition
 	float update_freq;
 	struct {
 		float ms;
