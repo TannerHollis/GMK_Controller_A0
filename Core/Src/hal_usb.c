@@ -58,5 +58,5 @@ void OTG_FS_IRQHandler(void);
 
 void OTG_FS_IRQHandler(void)
 {
-	//USB_vIRQHandler(UsbDevice);
+	USB_vIRQHandler(UsbDevice);
 }
