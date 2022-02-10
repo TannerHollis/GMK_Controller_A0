@@ -174,7 +174,10 @@ int main(void)
   HAL_TIM_Base_Start(&htim2);
 
   //Start OC Timer channels 1 through 4
-  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1 | TIM_CHANNEL_2 | TIM_CHANNEL_3 | TIM_CHANNEL_4);
+  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_3);
+  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_4);
 
   //Initialize Joysticks
   joystick_l = Joystick_Init(&(adc_buffer[0]), &(adc_buffer[1]));
