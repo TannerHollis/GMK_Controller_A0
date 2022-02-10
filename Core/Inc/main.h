@@ -43,7 +43,7 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
-#define EVENT_BUFFER_LENGTH 128
+static const char gmk_controller_id[] = "GMK Controller (Rev. A0)\n";
 
 /* USER CODE END EC */
 
@@ -110,6 +110,8 @@ void Error_Handler(void);
 #define SW_A_Pin GPIO_PIN_5
 #define SW_A_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+
+#define EVENT_BUFFER_LENGTH 128
 
 /* USER CODE END Private defines */
 

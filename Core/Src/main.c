@@ -27,6 +27,7 @@
 #include "usb_device.h"
 
 #include "Serial_Comm.h"
+#include "Controller_Config.h"
 #include "Joystick.h"
 #include "ButtonSwitch.h"
 #include "RotaryEncoder.h"
@@ -102,18 +103,25 @@ TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 
-//Create event buffer to store events to process
+//Create event buffer (FIFO) to store events to process
 State_TypeDef event_state[EVENT_BUFFER_LENGTH];
 uint8_t event_index_read = 0;
 uint8_t event_index_write = 0;
 
+//Declare controller data
 Controller_HandleTypeDef controller;
 
+//Declare Joysticks
 Joystick_HandleTypeDef joystick_l;
 Joystick_HandleTypeDef joystick_r;
 
+//Declare ADC buffer for joysticks
+uint16_t adc_buffer[4];
+
+//Declare RotaryEncoder
 RotaryEncoder_HandleTypeDef rotary_encoder;
 
+//Declare ButtonSwitches
 ButtonSwitch_HandleTypeDef button_a;
 ButtonSwitch_HandleTypeDef button_b;
 ButtonSwitch_HandleTypeDef button_x;
@@ -129,7 +137,9 @@ ButtonSwitch_HandleTypeDef button_back;
 ButtonSwitch_HandleTypeDef button_lt;
 ButtonSwitch_HandleTypeDef button_rt;
 
-uint16_t adc_buffer[4];
+//Declare controller configuration
+extern Controller_Config_HandleTypeDef *controller_config;
+uint8_t controller_config_profile = 0;
 
 /* USER CODE END PV */
 
@@ -226,6 +236,10 @@ int main(void)
   button_lt = ButtonSwitch_Init(&htim2, SW_LT_GPIO_Port, SW_LT_Pin, GPIO_PIN_RESET);
   button_rt = ButtonSwitch_Init(&htim2, SW_RT_GPIO_Port, SW_RT_Pin, GPIO_PIN_RESET);
 
+  //Get Controller Config
+  Controller_Config_GetConfig(controller_config_profile);
+  controller_config[0] += 1;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -247,6 +261,8 @@ int main(void)
 			HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4);
 			break;
 		case TIM_EVENT_2:
+			//Update RotaryEncoder periodically
+			RotaryEncoder_Update(&rotary_encoder);
 			break;
 		case TIM_EVENT_3:
 			FormatControllerData();

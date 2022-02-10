@@ -8,8 +8,9 @@
 #include "main.h"
 #include "Controller_Config.h"
 
-__attribute__((__section__(".user_data"))) const uint8_t *controller_configs[CONTROLLER_CONFIG_LENGTH][CONTROLLER_CONFIG_PROFILES];
-uint8_t controller_config[CONTROLLER_CONFIG_LENGTH];
+__attribute__((__section__(".user_data"))) const uint8_t controller_configs[CONTROLLER_CONFIG_PROFILES][CONTROLLER_CONFIG_LENGTH];
+uint8_t controller_config_address;
+Controller_Config_HandleTypeDef controller_config;
 
 uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint32_t *Data, uint16_t numberofwords){
 	static FLASH_EraseInitTypeDef EraseInitStruct;
@@ -75,5 +76,38 @@ void Flash_Read_Data (uint32_t StartSectorAddress, uint32_t *RxBuf, uint16_t num
 		StartSectorAddress += 4;
 		RxBuf++;
 		if (!(numberofwords--)) break;
+	}
+}
+
+void Controller_Config_GetConfig(uint8_t config_profile){
+	controller_config_address = config_profile * CONTROLLER_CONFIG_LENGTH;
+
+	//Store configuration buffer address and name into config
+	controller_config.config_buffer = &(controller_configs[controller_config_address])
+	controller_config.name = &(controller_configs[controller_config_address + 1]);
+
+	//Declare input configuration counter
+	uint8_t input_config_cnt = 0;
+	uint8_t config_start_found = 1;
+
+	for(uint16_t i = CONTROLLER_CONFIG_NAME_LENGTH + 2; i < CONTROLLER_CONFIG_LENGTH; i++){
+		//If the input config start detected,
+		if(config_start_found){
+			controller_config.input_configs[input_config_cnt].input_type = controller_config.config_buffer[i];
+			controller_config.input_configs[input_config_cnt].addr_start = i + 1;
+			config_start_found = 0;
+		}
+
+		//If end byte (0xFF) detected, increment the input config
+		if(controller_config.config_buffer[i] == 0xFF){
+			controller_config.input_configs[input_config_cnt].addr_end = i;
+			input_config_cnt++;
+			config_start_found = 1;
+		}
+	}
+
+	//Fill input configurations not used
+	for(uint8_t i = input_config_cnt; i < CONTROLLER_CONFIG_INPUTS; i++){
+		controller_config.input_configs[i].input_type = INPUT_NOT_CONFIGURED;
 	}
 }

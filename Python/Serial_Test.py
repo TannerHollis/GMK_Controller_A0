@@ -1,44 +1,43 @@
 import serial
 import pygame
-import struct
 import numpy
 from classes import *
 import time
 
+READ_BYTE_LENGTH = 64
+
 VID = 1155
 PID = 22336
-PORT = "COM5"
+port_name = "COM5"
 
 s = serial.Serial()
 s.baudrate = 192000
-s.port = PORT
+s.port = port_name
 s.parity = "N"
 
 def open_device():
-    s.port = PORT
+    s.port = com_port.text
     try:
         s.open()
-        print("Successfully opened device on port: " + PORT)
+        print("Successfully opened device on port: " + com_port.text)
     except:
-        print("Failed to acces device on port: " + PORT)
+        print("Failed to acces device on port: " + com_port.text)
 
 def test_send():
     if s.isOpen():
-        s.write(r"0"*65)
-        time.sleep(1)
-        print(s.read())
+        s.write(b"0"*65)
+        time.sleep(.25)
+        print(s.read(READ_BYTE_LENGTH))
 
 def test_read():
     if s.isOpen():
-        s.write(r"1" + r"0"*64)
-        time.sleep(1)
-        print(s.read())
+        s.write(b"1" + b"0"*64)
+        #time.sleep(.25)
+        print(s.read(READ_BYTE_LENGTH))
     
 def validate_port():
     com_port.text = com_port.text[0:com_port.entry_length]
-    PORT = com_port.text
-    s.port = PORT
-    open_device_button.text = "Open Device on: " + PORT
+    print(port_name)
 
 pygame.font.init()
 font = pygame.font.SysFont("Consolas", 10)
@@ -55,10 +54,10 @@ test_send_button.command = test_send
 test_read_config_button = Button(text_controller, "Test Read Config (Send 0x01)", (window_size[0]/2, 80), BLACK, 24, None, align="C", clickable=True)
 test_read_config_button.command = test_read
 
-open_device_button = Button(text_controller, "Open Device on: " + PORT, (window_size[0]/4, 200), BLACK, 24, None, align="C", clickable=True)
+open_device_button = Button(text_controller, "Open Device", (window_size[0]/4, 200), BLACK, 24, None, align="C", clickable=True)
 open_device_button.command = open_device
 
-com_port = EdittableText(text_controller, PORT, "Port: ", "", (window_size[0]*3/4, 200), BLACK, 24, None, align="C", entry=True, clickable=True, entry_length=6)
+com_port = EdittableText(text_controller, port_name, "Port: ", "", (window_size[0]*3/4, 200), BLACK, 24, None, align="C", entry=True, clickable=True, entry_length=6)
 com_port.validate = validate_port
 
 running = True

@@ -41,8 +41,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define STDOUT_BUFFER_SIZE 512
-#define STDIN_BUFFER_SIZE 512
+#define STDOUT_BUFFER_SIZE 1024
+#define STDIN_BUFFER_SIZE 1024
 
 #undef errno
 extern int32_t errno;
