@@ -38,6 +38,9 @@ RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_Typ
 	re.last_state = RotaryEncoder_GetState(&re);
 	re.ppr = ROTARYENCODER_PPR;
 	re.position = 0;
+	re.position_increment = 360.0f / re.ppr;
+	re.position_linear = 0;
+	re.linear_scale = ROTARYENCODER_LINEAR_SCALE;
 	re.speed_rpm = 0;
 	re.speed_hz = 0;
 	re.direction = NONE;
@@ -79,20 +82,28 @@ void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re){
 
 	//Increment/Decrement position
 	if(re->direction == CLOCKWISE){
-		re->position += 360.0f / re->ppr;
-		if(re->position > 360.0f){
-			re->position -= 360.0f;
-		}
+		//Calculate the rotational position
+		re->position += (re->position + re->position_increment < 360.0f) ? re->position_increment : -360.0f + re->position_increment;
+		//Calculate the linear position
+		re->position_linear += ((re->position_linear + re->linear_scale) < 1.0f) ? re->linear_scale : 0;
+		//Calculate rotational speed
+		re->speed_hz =  ROTARYENCODER_UPDATE_TIM_FREQ / (float)(time - re->last_time) / re->ppr;
 	}
-	if(re->direction == COUNTERCLOCKWISE){
-		re->position -= 360.0f / re->ppr;
-		if(re->position < 0.0f){
-			re->position += 360.0f;
-		}
+	else if(re->direction == COUNTERCLOCKWISE){
+		//Calculate the rotational position
+		re->position -= (re->position - re->position_increment > 0.0f) ? re->position_increment : -360.0f + re->position_increment;
+		//Calculate the linear position
+		re->position_linear += ((re->position_linear + re->linear_scale) < 1.0f) ? re->linear_scale : 0;
+		//Calculate rotational speed
+		re->speed_hz =  ROTARYENCODER_UPDATE_TIM_FREQ / (float)(time - re->last_time) / re->ppr;
+	}
+	else{
+		re->speed_hz = 0;
 	}
 
-	//Calculate rotational speed
-	re->speed_hz =  ROTARYENCODER_UPDATE_TIM_FREQ / (float)(time - re->last_time) / re->ppr;
+	//Calculate rotational speed peak and RPM
+	re->speed_hz_peak = (re->speed_hz > re->speed_hz_peak) ? re->speed_hz : re->speed_hz_peak;
+	re->speed_rpm_peak = re->speed_hz_peak * 60.0f;
 	re->speed_rpm = re->speed_hz * 60.0f;
 
 	//Store current state/time as previous state/time
@@ -164,4 +175,9 @@ RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTyp
 			break;
 	}
 	return(direction);
+}
+
+void RotaryEncoder_ClearPeakSpeed(RotaryEncoder_HandleTypeDef *re){
+	re->speed_hz_peak = 0.0f;
+	re->speed_rpm_peak = 0.0f;
 }

@@ -12,6 +12,7 @@
 
 #define ROTARYENCODER_UPDATE_TIM_FREQ 1000.0f
 #define ROTARYENCODER_PPR 24.0f
+#define ROTARYENCODER_LINEAR_SCALE 0.05f
 
 typedef enum{
 	NONE,
@@ -39,9 +40,14 @@ typedef struct{
 	uint16_t last_time;
 	RotaryEncoder_StateTypeDef last_state;
 	float position;
+	float position_increment;
+	float position_linear;
+	float linear_scale;
 	float ppr;
 	float speed_rpm;
 	float speed_hz;
+	float speed_hz_peak;
+	float speed_rpm_peak;
 	RotaryEncoder_DirectionTypeDef direction;
 } RotaryEncoder_HandleTypeDef;
 
@@ -49,5 +55,6 @@ RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_Typ
 RotaryEncoder_StateTypeDef RotaryEncoder_GetState(RotaryEncoder_HandleTypeDef *re);
 void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re);
 RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTypeDef state, RotaryEncoder_StateTypeDef last_state);
+void RotaryEncoder_ClearPeakSpeed(RotaryEncoder_HandleTypeDef *re);
 
 #endif /* ROTARYENCODER_ROTARYENCODER_H_ */

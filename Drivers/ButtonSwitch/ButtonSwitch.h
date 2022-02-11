@@ -24,7 +24,7 @@ typedef struct {
 	GPIO_PinState normal_state;
 	uint8_t is_long_press;
 	uint8_t is_short_press;
-	uint8_t is_held; // TODO: Program button "is held" condition
+	uint8_t is_held;
 	float update_freq;
 	struct {
 		float ms;

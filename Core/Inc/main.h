@@ -38,7 +38,16 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
-
+typedef enum {
+	EVENT_WAIT,
+	TIM_EVENT_1,
+	TIM_EVENT_2,
+	TIM_EVENT_3,
+	TIM_EVENT_4,
+	ADC_EVENT_UPDATE,
+	GPIO_EVENT_ENCODER_UPDATE,
+	USB_EVENT_HID_KEYBOARD_UPDATE,
+} State_TypeDef;
 
 /* USER CODE END ET */
 
@@ -52,12 +61,18 @@ static const char gmk_controller_id[] = "GMK Controller (Rev. A0)\n";
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
+#define GET_BIT(byte, n) ( (byte & (0x01 << n)) >> n)
+
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+
+void UpdateAllButtons();
+void write_next_event_state(State_TypeDef next_state);
+void write_next_keyboard_event_state(uint8_t *string_address, uint8_t string_length);
 
 /* USER CODE END EFP */
 
@@ -114,6 +129,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 
 #define EVENT_BUFFER_LENGTH 128
+#define KEYBOARD_EVENT_BUFFER_LENGTH 128
 
 /* USER CODE END Private defines */
 

@@ -10,7 +10,7 @@
 
 #include "main.h"
 
-#define JOYSTICK_DEADZONE 0.1f
+#define JOYSTICK_DEADZONE 0.025f
 #define JOYSTICK_ALIVEZONE 1.1f
 
 typedef struct{

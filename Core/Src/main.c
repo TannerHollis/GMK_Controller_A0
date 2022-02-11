@@ -38,16 +38,6 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
-typedef enum {
-	EVENT_WAIT,
-	TIM_EVENT_1,
-	TIM_EVENT_2,
-	TIM_EVENT_3,
-	TIM_EVENT_4,
-	ADC_EVENT_UPDATE,
-	GPIO_EVENT_ENCODER_UPDATE
-} State_TypeDef;
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -75,9 +65,14 @@ State_TypeDef event_state[EVENT_BUFFER_LENGTH];
 uint8_t event_index_read = 0;
 uint8_t event_index_write = 0;
 
+//Keyboard Event buffer (FIFO) to store keyboard event addresses and string lengths
+uint8_t *keyboard_event_string_addresses[KEYBOARD_EVENT_BUFFER_LENGTH];
+uint8_t keyboard_event_string_lengths[KEYBOARD_EVENT_BUFFER_LENGTH];
+uint8_t keyboard_event_index_read = 0;
+uint8_t keyboard_event_index_write = 0;
+
 //Declare Joysticks
-Joystick_HandleTypeDef joystick_l;
-Joystick_HandleTypeDef joystick_r;
+Joystick_HandleTypeDef joysticks[2];
 
 //Declare ADC buffer for joysticks
 uint16_t adc_buffer[4];
@@ -88,7 +83,7 @@ RotaryEncoder_HandleTypeDef rotary_encoder;
 //Declare ButtonSwitches
 ButtonSwitch_HandleTypeDef buttons[14];
 
-//Declare controller configuration profile, default to 0
+//Declare controller configuration profile, default to 0 on reset
 uint8_t controller_config_profile = 0;
 
 //Declare controller data
@@ -105,9 +100,6 @@ static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-
-void UpdateAllButtons();
-void write_next_event_state(State_TypeDef next_state);
 
 /* USER CODE END PFP */
 
@@ -166,8 +158,8 @@ int main(void)
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_4);
 
   //Initialize Joysticks
-  joystick_l = Joystick_Init(&(adc_buffer[0]), &(adc_buffer[1]));
-  joystick_r = Joystick_Init(&(adc_buffer[2]), &(adc_buffer[3]));
+  joysticks[0] = Joystick_Init(&(adc_buffer[0]), &(adc_buffer[1]));
+  joysticks[1] = Joystick_Init(&(adc_buffer[2]), &(adc_buffer[3]));
 
   //Initialize RotaryEncoder
   rotary_encoder = RotaryEncoder_Init(&htim2, ENCODER_A_GPIO_Port, ENCODER_A_Pin, ENCODER_B_GPIO_Port, ENCODER_B_Pin);
@@ -204,29 +196,33 @@ int main(void)
   {
 	switch(event_state[event_index_read]){
 		case EVENT_WAIT:
-			//Read Button States
-			UpdateAllButtons();
+			UpdateAllButtons(); //Read Button States
 			break;
 		case TIM_EVENT_1:
-			//Trigger Joystick ADC read
-			HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4);
+			RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
+			RotaryEncoder_ClearPeakSpeed(&rotary_encoder); //Clear peak speed before controller formatting
 			break;
 		case TIM_EVENT_2:
-			//Update RotaryEncoder periodically
-			RotaryEncoder_Update(&rotary_encoder);
+			HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4); //Trigger Joystick ADC read
 			break;
 		case TIM_EVENT_3:
-			FormatControllerData();
+			Controller_Config_MapControllerData(&controller); //Map Controller Configuration Data
 			break;
 		case TIM_EVENT_4:
-			_write(0, &controller, sizeof(controller));
+			_write(0, &controller, sizeof(controller)); //Write to USB
 			break;
 		case ADC_EVENT_UPDATE:
-			Joystick_Update(&joystick_l);
-			Joystick_Update(&joystick_r);
+			Joystick_Update(&(joysticks[0]));
+			Joystick_Update(&(joysticks[1]));
 			break;
 		case GPIO_EVENT_ENCODER_UPDATE:
 			RotaryEncoder_Update(&rotary_encoder);
+			break;
+		case USB_EVENT_HID_KEYBOARD_UPDATE:
+			if(keyboard_event_index_write != keyboard_event_index_read){
+				// TODO: Implement a Send Keyboard Event via HID
+				event_index_read = (event_index_read + 1) & KEYBOARD_EVENT_BUFFER_LENGTH;
+			}
 			break;
 	}
 	event_state[event_index_read] = EVENT_WAIT;
@@ -631,6 +627,14 @@ void UpdateAllButtons(){
 void write_next_event_state(State_TypeDef next_state){
 	event_index_write = (event_index_write + 1) & EVENT_BUFFER_LENGTH;
 	event_state[event_index_write] = next_state;
+}
+
+//Increment keyboard_event_index_write and write to next event_state in buffer
+void write_next_keyboard_event_state(uint8_t *string_address, uint8_t string_length){
+	write_next_event_state(USB_EVENT_HID_KEYBOARD_UPDATE);
+	keyboard_event_string_addresses[keyboard_event_index_write] = string_address;
+	keyboard_event_string_lengths[keyboard_event_index_write] = string_length;
+	event_index_write = (keyboard_event_index_write + 1) & KEYBOARD_EVENT_BUFFER_LENGTH;
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc){
