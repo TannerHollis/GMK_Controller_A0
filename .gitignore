@@ -54,3 +54,6 @@ dkms.conf
 *.list
 Debug/GMK_Controller_A0.bin
 Debug/GMK_Controller_A0.list
+Debug/GMK_Controller_A0.bin
+Debug/GMK_Controller_A0.list
+*.bin

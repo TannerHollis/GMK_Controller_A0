@@ -9,6 +9,7 @@
   * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
+  *
   * This software component is licensed by ST under BSD 3-Clause license,
   * the "License"; You may not use this file except in compliance with the
   * License. You may obtain a copy of the License at:
@@ -36,40 +37,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
-typedef struct {
-	struct {
-		uint8_t a : 1;
-		uint8_t b : 1;
-		uint8_t x : 1;
-		uint8_t y : 1;
-		uint8_t rb : 1;
-		uint8_t lb : 1;
-		uint8_t rth : 1;
-		uint8_t lth : 1;
-		uint8_t up : 1;
-		uint8_t down : 1;
-		uint8_t left : 1;
-		uint8_t right : 1;
-		uint8_t start : 1;
-		uint8_t back : 1;
-		uint8_t _reserved : 4;
-	} buttons;
-	struct {
-		struct {
-			int16_t x;
-			int16_t y;
-		} left;
-		struct {
-			int16_t x;
-			int16_t y;
-		} right;
-	} joysticks;
-	struct {
-		uint8_t left;
-		uint8_t right;
-	} triggers;
-} Controller_HandleTypeDef;
 
 typedef enum {
 	EVENT_WAIT,
@@ -108,9 +75,6 @@ State_TypeDef event_state[EVENT_BUFFER_LENGTH];
 uint8_t event_index_read = 0;
 uint8_t event_index_write = 0;
 
-//Declare controller data
-Controller_HandleTypeDef controller;
-
 //Declare Joysticks
 Joystick_HandleTypeDef joystick_l;
 Joystick_HandleTypeDef joystick_r;
@@ -122,24 +86,13 @@ uint16_t adc_buffer[4];
 RotaryEncoder_HandleTypeDef rotary_encoder;
 
 //Declare ButtonSwitches
-ButtonSwitch_HandleTypeDef button_a;
-ButtonSwitch_HandleTypeDef button_b;
-ButtonSwitch_HandleTypeDef button_x;
-ButtonSwitch_HandleTypeDef button_y;
-ButtonSwitch_HandleTypeDef button_lb;
-ButtonSwitch_HandleTypeDef button_rb;
-ButtonSwitch_HandleTypeDef button_lth;
-ButtonSwitch_HandleTypeDef button_rth;
-ButtonSwitch_HandleTypeDef button_left;
-ButtonSwitch_HandleTypeDef button_right;
-ButtonSwitch_HandleTypeDef button_start;
-ButtonSwitch_HandleTypeDef button_back;
-ButtonSwitch_HandleTypeDef button_lt;
-ButtonSwitch_HandleTypeDef button_rt;
+ButtonSwitch_HandleTypeDef buttons[14];
 
-//Declare controller configuration
-extern Controller_Config_HandleTypeDef *controller_config;
+//Declare controller configuration profile, default to 0
 uint8_t controller_config_profile = 0;
+
+//Declare controller data
+Controller_HandleTypeDef controller;
 
 /* USER CODE END PV */
 
@@ -153,7 +106,6 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
-void FormatControllerData();
 void UpdateAllButtons();
 void write_next_event_state(State_TypeDef next_state);
 
@@ -221,24 +173,23 @@ int main(void)
   rotary_encoder = RotaryEncoder_Init(&htim2, ENCODER_A_GPIO_Port, ENCODER_A_Pin, ENCODER_B_GPIO_Port, ENCODER_B_Pin);
 
   //Initialize ButtonSwitches
-  button_a = ButtonSwitch_Init(&htim2, SW_A_GPIO_Port, SW_A_Pin, GPIO_PIN_RESET);
-  button_b = ButtonSwitch_Init(&htim2, SW_B_GPIO_Port, SW_B_Pin, GPIO_PIN_RESET);
-  button_x = ButtonSwitch_Init(&htim2, SW_X_GPIO_Port, SW_X_Pin, GPIO_PIN_RESET);
-  button_y = ButtonSwitch_Init(&htim2, SW_Y_GPIO_Port, SW_Y_Pin, GPIO_PIN_RESET);
-  button_lb = ButtonSwitch_Init(&htim2, SW_LB_GPIO_Port, SW_LB_Pin, GPIO_PIN_RESET);
-  button_rb = ButtonSwitch_Init(&htim2, SW_RB_GPIO_Port, SW_RB_Pin, GPIO_PIN_RESET);
-  button_lth = ButtonSwitch_Init(&htim2, SW_LTH_GPIO_Port, SW_LTH_Pin, GPIO_PIN_RESET);
-  button_rth = ButtonSwitch_Init(&htim2, SW_RTH_GPIO_Port, SW_RTH_Pin, GPIO_PIN_RESET);
-  button_left = ButtonSwitch_Init(&htim2, SW_LEFT_GPIO_Port, SW_LEFT_Pin, GPIO_PIN_RESET);
-  button_right = ButtonSwitch_Init(&htim2, SW_RIGHT_GPIO_Port, SW_RIGHT_Pin, GPIO_PIN_RESET);
-  button_start = ButtonSwitch_Init(&htim2, SW_START_GPIO_Port, SW_START_Pin, GPIO_PIN_RESET);
-  button_back = ButtonSwitch_Init(&htim2, SW_BACK_GPIO_Port, SW_BACK_Pin, GPIO_PIN_RESET);
-  button_lt = ButtonSwitch_Init(&htim2, SW_LT_GPIO_Port, SW_LT_Pin, GPIO_PIN_RESET);
-  button_rt = ButtonSwitch_Init(&htim2, SW_RT_GPIO_Port, SW_RT_Pin, GPIO_PIN_RESET);
+  buttons[0] = ButtonSwitch_Init(&htim2, SW_A_GPIO_Port, SW_A_Pin, GPIO_PIN_RESET);
+  buttons[1] = ButtonSwitch_Init(&htim2, SW_B_GPIO_Port, SW_B_Pin, GPIO_PIN_RESET);
+  buttons[2] = ButtonSwitch_Init(&htim2, SW_X_GPIO_Port, SW_X_Pin, GPIO_PIN_RESET);
+  buttons[3] = ButtonSwitch_Init(&htim2, SW_Y_GPIO_Port, SW_Y_Pin, GPIO_PIN_RESET);
+  buttons[4] = ButtonSwitch_Init(&htim2, SW_LB_GPIO_Port, SW_LB_Pin, GPIO_PIN_RESET);
+  buttons[5] = ButtonSwitch_Init(&htim2, SW_RB_GPIO_Port, SW_RB_Pin, GPIO_PIN_RESET);
+  buttons[6] = ButtonSwitch_Init(&htim2, SW_LTH_GPIO_Port, SW_LTH_Pin, GPIO_PIN_RESET);
+  buttons[7] = ButtonSwitch_Init(&htim2, SW_RTH_GPIO_Port, SW_RTH_Pin, GPIO_PIN_RESET);
+  buttons[8] = ButtonSwitch_Init(&htim2, SW_LEFT_GPIO_Port, SW_LEFT_Pin, GPIO_PIN_RESET);
+  buttons[9] = ButtonSwitch_Init(&htim2, SW_RIGHT_GPIO_Port, SW_RIGHT_Pin, GPIO_PIN_RESET);
+  buttons[10] = ButtonSwitch_Init(&htim2, SW_START_GPIO_Port, SW_START_Pin, GPIO_PIN_RESET);
+  buttons[11] = ButtonSwitch_Init(&htim2, SW_BACK_GPIO_Port, SW_BACK_Pin, GPIO_PIN_RESET);
+  buttons[12] = ButtonSwitch_Init(&htim2, SW_LT_GPIO_Port, SW_LT_Pin, GPIO_PIN_RESET);
+  buttons[13] = ButtonSwitch_Init(&htim2, SW_RT_GPIO_Port, SW_RT_Pin, GPIO_PIN_RESET);
 
   //Get Controller Config
   Controller_Config_GetConfig(controller_config_profile);
-  controller_config[0] += 1;
 
   /* USER CODE END 2 */
 
@@ -670,38 +621,10 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-//Format Controller data before output through USB
-void FormatControllerData(){
-	controller.buttons.a = button_a.is_held;
-	controller.buttons.b = button_b.is_held;
-	controller.buttons.x = button_x.is_held;
-	controller.buttons.y = button_y.is_held;
-	controller.buttons.lb = button_lb.is_held;
-	controller.buttons.rb = button_rb.is_held;
-	controller.buttons.lth = button_lth.is_held;
-	controller.buttons.rth = button_rth.is_held;
-	controller.buttons.left = button_left.is_held;
-	controller.buttons.right = button_right.is_held;
-	controller.buttons.start = button_start.is_held;
-	controller.buttons.back = button_back.is_held;
-}
-
-//Update button status
 void UpdateAllButtons(){
-	ButtonSwitch_Update(&button_a);
-	ButtonSwitch_Update(&button_b);
-	ButtonSwitch_Update(&button_x);
-	ButtonSwitch_Update(&button_y);
-	ButtonSwitch_Update(&button_lb);
-	ButtonSwitch_Update(&button_rb);
-	ButtonSwitch_Update(&button_lth);
-	ButtonSwitch_Update(&button_rth);
-	ButtonSwitch_Update(&button_left);
-	ButtonSwitch_Update(&button_right);
-	ButtonSwitch_Update(&button_start);
-	ButtonSwitch_Update(&button_back);
-	ButtonSwitch_Update(&button_lt);
-	ButtonSwitch_Update(&button_rt);
+	for(uint8_t i = 0; i < 14; i++){
+		ButtonSwitch_Update(&(buttons[i]));
+	}
 }
 
 //Increment event_index_write and write to next event_state in buffer

@@ -83,31 +83,62 @@ void Controller_Config_GetConfig(uint8_t config_profile){
 	controller_config_address = config_profile * CONTROLLER_CONFIG_LENGTH;
 
 	//Store configuration buffer address and name into config
-	controller_config.config_buffer = &(controller_configs[controller_config_address])
-	controller_config.name = &(controller_configs[controller_config_address + 1]);
+	controller_config.config_buffer = (uint8_t *)(controller_configs[controller_config_address]);
+	controller_config.name = (char *)(controller_configs[controller_config_address + 1]);
 
 	//Declare input configuration counter
-	uint8_t input_config_cnt = 0;
+	uint8_t input_config_index = 0;
 	uint8_t config_start_found = 1;
 
 	for(uint16_t i = CONTROLLER_CONFIG_NAME_LENGTH + 2; i < CONTROLLER_CONFIG_LENGTH; i++){
 		//If the input config start detected,
 		if(config_start_found){
-			controller_config.input_configs[input_config_cnt].input_type = controller_config.config_buffer[i];
-			controller_config.input_configs[input_config_cnt].addr_start = i + 1;
+			controller_config.input_configs[input_config_index].input_type = controller_config.config_buffer[i];
+			controller_config.input_configs[input_config_index].addr_start = i + 1;
 			config_start_found = 0;
 		}
 
-		//If end byte (0xFF) detected, increment the input config
+		//If end byte (0xFF) detected, increment the input config counter
 		if(controller_config.config_buffer[i] == 0xFF){
-			controller_config.input_configs[input_config_cnt].addr_end = i;
-			input_config_cnt++;
+			controller_config.input_configs[input_config_index].addr_end = i;
+			input_config_index++;
 			config_start_found = 1;
 		}
 	}
 
-	//Fill input configurations not used
-	for(uint8_t i = input_config_cnt; i < CONTROLLER_CONFIG_INPUTS; i++){
+	//Fill the remaining input configurations not used
+	for(uint8_t i = input_config_index; i < CONTROLLER_CONFIG_INPUTS; i++){
 		controller_config.input_configs[i].input_type = INPUT_NOT_CONFIGURED;
 	}
+}
+
+void Controller_Config_ClearControllerData(Controller_HandleTypeDef *c){
+	//Reset all bytes inside of the Controller Data to zero before update
+	uint8_t *controller = (uint8_t *)c;
+	for(uint8_t i = 0; i < sizeof(c); i++){
+		*controller = 0x00;
+		controller++;
+	}
+}
+
+void Controller_Config_MapControllerData(Controller_HandleTypeDef *c){
+	//Clear Controller Data
+	Controller_Config_ClearControllerData(c);
+
+	//Iterate through input configurations to compute output
+	for(uint8_t i = 0; i < CONTROLLER_CONFIG_INPUTS; i++){
+		Controller_Config_MapInputConfig(c, &(controller_config.input_configs[i]));
+	}
+}
+
+void Controller_Config_MapInputConfig(Controller_HandleTypeDef *c, Input_Config_HandleTypeDef *ic){
+	switch(ic->input_type){
+		case INPUT_BUTTON_AS_BUTTON:
+			Controller_Config_MapInputButtonAsButton(c, &(controller_config.config_buffer[ic->addr_start]));
+			break;
+	}
+}
+
+void Controller_Config_MapInputButtonAsButton(Controller_HandleTypeDef *c, uint8_t *ic_buffer){
+
 }

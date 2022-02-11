@@ -1,4 +1,4 @@
-"./Core/Inc/console_if.o"
+"./Core/Src/console_if.o"
 "./Core/Src/hal_usb.o"
 "./Core/Src/main.o"
 "./Core/Src/stm32f4xx_hal_msp.o"
