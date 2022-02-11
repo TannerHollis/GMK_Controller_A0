@@ -102,5 +102,8 @@ void Controller_Config_MapInputJoystickAsJoystick(Controller_HandleTypeDef *c, u
 void Controller_Config_MapInputJoystickAsKeyboard(Controller_HandleTypeDef *c, uint8_t *ic_buffer, uint8_t str_length);
 void Controller_Config_MapInputJoystickAsTrigger(Controller_HandleTypeDef *c, uint8_t *ic_buffer);
 void Controller_Config_MapInputEncoderAsButton(Controller_HandleTypeDef *c, uint8_t *ic_buffer);
+void Controller_Config_MapInputEncoderAsJoystick(Controller_HandleTypeDef *c, uint8_t *ic_buffer);
+void Controller_Config_MapInputEncoderAsKeyboard(Controller_HandleTypeDef *c, uint8_t *ic_buffer, uint8_t str_length);
+void Controller_Config_MapInputEncoderAsTrigger(Controller_HandleTypeDef *c, uint8_t *ic_buffer);
 
 #endif /* CONTROLLER_CONFIG_CONTROLLER_CONFIG_H_ */

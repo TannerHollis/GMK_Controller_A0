@@ -134,6 +134,7 @@ void Controller_Config_MapControllerData(Controller_HandleTypeDef *c){
 	//Clear Controller Data
 	Controller_Config_ClearControllerData(c);
 
+	// TODO: Time Function processing time
 	//Iterate through input configurations to compute output
 	for(uint8_t i = 0; i < CONTROLLER_CONFIG_INPUTS; i++){
 		Controller_Config_MapInputConfig(c, &(controller_config.input_configs[i]));
@@ -162,6 +163,22 @@ void Controller_Config_MapInputConfig(Controller_HandleTypeDef *c, Input_Config_
 			break;
 		case INPUT_JOYSTICK_AS_KEYBOARD:
 			Controller_Config_MapInputJoystickAsKeyboard(c, &(controller_config.config_buffer[ic->addr_start]), ic->addr_end - ic->addr_start);
+			break;
+		case INPUT_JOYSTICK_AS_TRIGGER:
+			Controller_Config_MapInputJoystickAsJoystick(c, &(controller_config.config_buffer[ic->addr_start]));
+		case INPUT_ENCODER_AS_BUTTON:
+			Controller_Config_MapInputEncoderAsButton(c, &(controller_config.config_buffer[ic->addr_start]));
+			break;
+		case INPUT_ENCODER_AS_JOYSTICK:
+			Controller_Config_MapInputEncoderAsJoystick(c, &(controller_config.config_buffer[ic->addr_start]));
+			break;
+		case INPUT_ENCODER_AS_KEYBOARD:
+			Controller_Config_MapInputEncoderAsKeyboard(c, &(controller_config.config_buffer[ic->addr_start]), ic->addr_end - ic->addr_start);
+			break;
+		case INPUT_ENCODER_AS_TRIGGER:
+			Controller_Config_MapInputEncoderAsTrigger(c, &(controller_config.config_buffer[ic->addr_start]));
+			break;
+		default:
 			break;
 	}
 }
@@ -401,7 +418,7 @@ void Controller_Config_MapInputEncoderAsJoystick(Controller_HandleTypeDef *c, ui
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
 	float *speed_threshold = (float *)(&ic_buffer[1]);
 	float *linear_middle = (float *)(&ic_buffer[5]);
-	float *linear_middle = (float *)(&ic_buffer[9]);
+	float *linear_deadzone = (float *)(&ic_buffer[9]);
 	uint8_t js_out = GET_BIT(ic_buffer[13], 0);
 	uint8_t xy = GET_BIT(ic_buffer[13], 1);
 	uint8_t pn = GET_BIT(ic_buffer[13], 2);
@@ -414,6 +431,84 @@ void Controller_Config_MapInputEncoderAsJoystick(Controller_HandleTypeDef *c, ui
 		}
 	}
 	else{
-		c->joysticks._bits[js_out*2 + xy] += (rotary_encoder->position_linear - *linear_middle)*(-INT16_MIN);
+		float val = rotary_encoder->position_linear - *linear_middle;
+		c->joysticks._bits[js_out*2 + xy] += (val > *linear_deadzone || val < -*linear_deadzone) ? ((invert) ? val * INT16_MIN : val * -INT16_MIN) : 0;
+	}
+}
+
+/*
+ * Input Configuration Buffer:
+ * 		Byte 0:
+ * 			Bit 0: Direction Based (0) or Speed Based (1)
+ * 			Bit 1: Direction CW (0) or CCW (1)
+ * 			Bit 2: Invert Direction (1)
+ * 			Bits 3-7: Don't Care
+ * 		Byte 1: Speed Threshold 4th-Byte (float)
+ * 		Byte 2: Speed Threshold 3rd-Byte (float)
+ * 		Byte 3: Speed Threshold 2nd-Byte (float)
+ * 		Byte 4: Speed Threshold 1st-Byte (float)
+ * 		Byte 5: Byte 0 of String
+ */
+void Controller_Config_MapInputEncoderAsKeyboard(Controller_HandleTypeDef *c, uint8_t *ic_buffer, uint8_t str_length){
+	uint8_t speed_based = GET_BIT(ic_buffer[0], 0);
+	uint8_t ccw = GET_BIT(ic_buffer[0], 1);
+	uint8_t invert = GET_BIT(ic_buffer[0], 2);
+	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
+	float *speed_threshold = (float *)(&ic_buffer[1]);
+	if(ccw && rotary_encoder->direction == dir){
+		if(speed_based){
+			if(rotary_encoder->speed_rpm > *speed_threshold)
+				write_next_keyboard_event_state(&(ic_buffer[5]), str_length - 5);
+		}
+		else
+			write_next_keyboard_event_state(&(ic_buffer[5]), str_length - 5);
+	}
+}
+
+/*
+ * Input Configuration Buffer:
+ * 		Byte 0:
+ * 			Bit 0: Linear Based (0) or Binary Based (1)
+ * 			Bit 1: Direction Based (0) or Speed Based (1)
+ * 			Bit 2: Direction CW (0) or CCW (1)
+ * 			Bit 3: Invert Direction (1)
+ * 			Bits 4-7: Don't Care
+ * 		Byte 1: Speed Threshold 4th-Byte (float)
+ * 		Byte 2: Speed Threshold 3rd-Byte (float)
+ * 		Byte 3: Speed Threshold 2nd-Byte (float)
+ * 		Byte 4: Speed Threshold 1st-Byte (float)
+ * 		Byte 5: Linear Middle 4th-Byte (float)
+ * 		Byte 6: Linear Middle 3rd-Byte (float)
+ * 		Byte 7: Linear Middle 2nd-Byte (float)
+ * 		Byte 8: Linear Middle 1st-Byte (float)
+* 		Byte 9: Linear Deadzone 4th-Byte (float)
+ * 		Byte 10: Linear Deadzone 3rd-Byte (float)
+ * 		Byte 11: Linear Deadzone 2nd-Byte (float)
+ * 		Byte 12: Linear Deadzone 1st-Byte (float)
+ * 		Byte 13:
+ * 			Bit 0: Output Trigger Left (0) or Output Trigger Right (1)
+ * 			Bits 3-7: Don't Care
+ */
+void Controller_Config_MapInputEncoderAsTrigger(Controller_HandleTypeDef *c, uint8_t *ic_buffer){
+	uint8_t binary_based = GET_BIT(ic_buffer[0], 0);
+	uint8_t speed_based = GET_BIT(ic_buffer[0], 1);
+	uint8_t ccw = GET_BIT(ic_buffer[0], 2);
+	uint8_t invert = GET_BIT(ic_buffer[0], 3);
+	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
+	float *speed_threshold = (float *)(&ic_buffer[1]);
+	float *linear_middle = (float *)(&ic_buffer[5]);
+	float *linear_deadzone = (float *)(&ic_buffer[9]);
+	uint8_t tr_out = GET_BIT(ic_buffer[13], 0);
+	if(binary_based){
+		if(ccw && rotary_encoder->direction == dir){
+			if(speed_based)
+				c->triggers._bits[tr_out] += UINT8_MAX * (int16_t)(rotary_encoder->speed_rpm > *speed_threshold);
+			else
+				c->triggers._bits[tr_out] += UINT8_MAX;
+		}
+	}
+	else{
+		float val = rotary_encoder->position_linear - *linear_middle;
+		c->triggers._bits[tr_out] += (val > *linear_deadzone || val < -*linear_deadzone) ? ((invert) ? (1 - val) * UINT8_MAX : val * UINT8_MAX) : 0;
 	}
 }

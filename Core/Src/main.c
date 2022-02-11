@@ -224,6 +224,9 @@ int main(void)
 				event_index_read = (event_index_read + 1) & KEYBOARD_EVENT_BUFFER_LENGTH;
 			}
 			break;
+		case USB_EVENT_HID_GAMEPAD_UPDATE:
+			// TODO: Implement a Send Gamepad Event via HID
+			break;
 	}
 	event_state[event_index_read] = EVENT_WAIT;
 	if(event_index_read != event_index_write){
