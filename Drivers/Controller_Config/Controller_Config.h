@@ -51,10 +51,10 @@ typedef struct {
 			uint8_t b : 1;
 			uint8_t x : 1;
 			uint8_t y : 1;
-			uint8_t rb : 1;
 			uint8_t lb : 1;
-			uint8_t rth : 1;
+			uint8_t rb : 1;
 			uint8_t lth : 1;
+			uint8_t rth : 1;
 			uint8_t up : 1;
 			uint8_t down : 1;
 			uint8_t left : 1;
