@@ -93,13 +93,15 @@ void Controller_Config_GetConfig(uint8_t config_profile){
 	//Store configuration buffer address, profile number and name into config
 	controller_config.config_buffer = (uint8_t *)(controller_configs[controller_config_address]);
 	controller_config.profile = (uint8_t)(*controller_configs[controller_config_address]);
-	controller_config.name = (char *)(controller_configs[controller_config_address + 1]);
+	controller_config.led_color[0] = (uint8_t)(*controller_configs[controller_config_address + 1]);
+	controller_config.led_color[1] = (uint8_t)(*controller_configs[controller_config_address + 2]);
+	controller_config.name = (char *)(controller_configs[controller_config_address + 3]);
 
 	//Declare input configuration counter
 	uint8_t input_config_index = 0;
 	uint8_t config_start_found = 1;
 
-	for(uint16_t i = CONTROLLER_CONFIG_NAME_LENGTH + 1; i < CONTROLLER_CONFIG_LENGTH; i++){
+	for(uint16_t i = CONTROLLER_CONFIG_NAME_LENGTH + 3; i < CONTROLLER_CONFIG_LENGTH; i++){
 		//If the input config start detected,
 		if(config_start_found){
 			controller_config.input_configs[input_config_index].input_type = controller_config.config_buffer[i];

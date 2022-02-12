@@ -1,6 +1,7 @@
 import struct
 import os
 
+#Define Input Mapping Configurations
 INPUT_BUTTON_AS_BUTTON = 0
 INPUT_BUTTON_AS_JOYSTICK = 1
 INPUT_BUTTON_AS_KEYBOARD = 2
@@ -15,8 +16,74 @@ INPUT_ENCODER_AS_KEYBOARD = 10
 INPUT_ENCODER_AS_TRIGGER = 11
 INPUT_NOT_CONFIGURED = 12
 
+#Define configuration output byte formatting
 CONFIGURATION_SIZE = 2048
+CONFIG_NAME_LENGTH = 64
 BYTE_ENCODING = "utf-8"
+
+#Define LED colors
+LED_COLOR_NONE = 0
+LED_COLOR_RED = 1
+LED_COLOR_GREEN = 2
+LED_COLOR_YELLOW = 3
+LED_COLOR_BLUE = 4
+LED_COLOR_PURPLE = 5
+LED_COLOR_CYAN = 6
+LED_COLOR_WHITE = 7
+
+class Controller_Configuration():
+    def __init__(self, profile_number, config_name, led_colors):
+        self.profile_number = profile_number
+        self.config_name = config_name
+        self.led_colors = led_colors
+        self.led_colors_bytes = self.set_led_colors(led_colors)
+        self.configurations = []
+
+    def add_config(self, configuration):
+        self.configurations.append(configuration)
+
+    def delete_config(self, configuration):
+        self.configurations.pop(configuration)
+
+    def get_number_of_configurations(self):
+        return len(self.configurations)
+
+    def set_led_colors(self, led_colors):
+        self.led_colors = led_colors
+        b0 = 0x00
+        b0 |= self.led_colors[0] << 5
+        b0 |= self.led_colors[1] << 2
+        b0 |= self.led_colors[2] >> 1
+        b1 = 0x00
+        b1 |= self.led_colors[2] << 7
+        b1 |= self.led_colors[3] << 1
+        self.led_colors_bytes = bytes([b0, b1])
+        return self.led_colors_bytes
+
+    def get_led_colors_bytes(self):
+        return bytes(self.led_colors_bytes)
+
+    def print_config_to_file(self, path):
+        #Check if folder exists
+        if not os.path.isdir(path):
+            os.makedirs(path)
+            print("Created folder : ", path)
+        file_path = os.path.join(path, self.config_name + ".cfg")
+
+        #Write to file
+        with open(file_path, "wb") as f:
+            print("Writing to file: {}.cfg".format(file_path))
+            f.write(bytes([self.profile_number]))
+            f.write(self.get_led_colors_bytes())
+            f.write(self.config_name[:64].ljust(64, chr(0)).encode(BYTE_ENCODING))
+            for config in self.configurations:
+                config_bytes = config.to_bytes()
+                f.write(config_bytes)
+                f.write(bytes([0xff]))
+
+        #Report file size
+        byte_cnt = os.path.getsize(file_path)
+        print("Total bytes used in configuration: {} of {}. ({:0.2f}%)".format(byte_cnt, CONFIGURATION_SIZE, 100 * byte_cnt / CONFIGURATION_SIZE))
 
 class Button_as_Button():
     def __init__(self, button_in, button_out):
@@ -213,46 +280,4 @@ class Encoder_as_Trigger():
         b0 |= self.invert << 3
         self.struct = struct.pack(">BBfffB", self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, self.trigger_out)
         return self.struct
-
-
-if __name__ == "__main__":
-    print("Creating Default Joystick Configurations")
-    config_name = "config0"
-    config0 = []
-    config0.append(Button_as_Button(0, 0))
-    config0.append(Button_as_Button(1, 1))
-    config0.append(Button_as_Button(2, 2))
-    config0.append(Button_as_Button(3, 3))
-    config0.append(Button_as_Button(4, 4))
-    config0.append(Button_as_Button(5, 5))
-    config0.append(Button_as_Button(6, 6))
-    config0.append(Button_as_Button(7, 7))
-    config0.append(Button_as_Button(8, 10))
-    config0.append(Button_as_Button(9, 11))
-    config0.append(Button_as_Button(10, 12))
-    config0.append(Button_as_Button(11, 13))
-
-    config0.append(Button_as_Trigger(12, 0))
-    config0.append(Button_as_Trigger(13, 1))
-
-    config0.append(Joystick_as_Joystick(0, 0, 0, 0, 0.05, 0.05))
-    config0.append(Joystick_as_Joystick(1, 0, 0, 1, 0.05, 0.05))
-
-    config0.append(Encoder_as_Button(1, 0, 0, 1.0, 8))
-    config0.append(Encoder_as_Button(1, 1, 0, 1.0, 9))
-
-    ##Extra Keyboard Mapping
-    #config0.append(Button_as_Keyboard(0, "GMK Controller will revolutionize the way we clap."))
-
-    with open("{}.cfg".format(config_name), "wb") as f:
-        print("Writing to file: {}.cfg".format(config_name))
-        f.write(bytes([0x00]))
-        f.write("GMK Controller - Default Configuration 1".ljust(32).encode(BYTE_ENCODING))
-        for config in config0:
-            config_bytes = config.to_bytes()
-            f.write(config_bytes)
-            f.write(bytes([0xff]))
-
-    byte_cnt = os.path.getsize("{}.cfg".format(config_name))
-    print("Total bytes used in configuration: {} of {}. ({:0.2f}%)".format(byte_cnt, CONFIGURATION_SIZE, 100 * byte_cnt / CONFIGURATION_SIZE))
     

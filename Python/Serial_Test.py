@@ -37,7 +37,6 @@ def test_read():
     
 def validate_port():
     com_port.text = com_port.text[0:com_port.entry_length]
-    print(port_name)
 
 pygame.font.init()
 font = pygame.font.SysFont("Consolas", 10)

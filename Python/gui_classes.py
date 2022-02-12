@@ -324,15 +324,16 @@ class EdittableText:
             pre_rect.topright = text_rect.topleft
 
         if self.entry:
-            pygame.draw.rect(self.parent.screen, OFF_WHITE, Rect(text_rect.topleft, (self.entry_length*self.size/2, text_rect.height)))
-            
+            entry_rect = Rect(pre_rect.topright, (self.entry_length*self.size/2, pre_rect.height))
+            pygame.draw.rect(self.parent.screen, OFF_WHITE, entry_rect)
+                    
         if time.time() % 1 > 0.5 and self.selected:
             cursor = Rect(text_rect.topright, (3, text_rect.height))
             pygame.draw.rect(self.parent.screen, self.color, cursor)
             suff_rect.topleft = (text_rect.topright[0] + 3, text_rect.topright[1])
         else:
             suff_rect.topleft = text_rect.topright
-
+        
         self.parent.screen.blit(pre, pre_rect)
         self.parent.screen.blit(text, text_rect)
         self.parent.screen.blit(suff, suff_rect)
