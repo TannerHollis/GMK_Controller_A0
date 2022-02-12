@@ -15,6 +15,7 @@ INPUT_ENCODER_AS_KEYBOARD = 10
 INPUT_ENCODER_AS_TRIGGER = 11
 INPUT_NOT_CONFIGURED = 12
 
+CONFIGURATION_SIZE = 2048
 BYTE_ENCODING = "utf-8"
 
 class Button_as_Button():
@@ -252,5 +253,5 @@ if __name__ == "__main__":
             f.write(bytes([0xff]))
 
     byte_cnt = os.path.getsize("config0.cfg")
-    print("Total bytes used in configuration: {} of 2048. ({:0.2f}%)".format(byte_cnt, 100 * byte_cnt / 2048))
+    print("Total bytes used in configuration: {} of {}. ({:0.2f}%)".format(byte_cnt, CONFIGURATION_SIZE, 100 * byte_cnt / CONFIGURATION_SIZE))
     
