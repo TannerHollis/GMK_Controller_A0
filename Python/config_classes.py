@@ -217,6 +217,7 @@ class Encoder_as_Trigger():
 
 if __name__ == "__main__":
     print("Creating Default Joystick Configurations")
+    config_name = "config0"
     config0 = []
     config0.append(Button_as_Button(0, 0))
     config0.append(Button_as_Button(1, 1))
@@ -243,8 +244,8 @@ if __name__ == "__main__":
     ##Extra Keyboard Mapping
     #config0.append(Button_as_Keyboard(0, "GMK Controller will revolutionize the way we clap."))
 
-    with open("config0.cfg", "wb") as f:
-        print("Writing to file: config0.cfg")
+    with open("{}.cfg".format(config_name), "wb") as f:
+        print("Writing to file: {}.cfg".format(config_name))
         f.write(bytes([0x00]))
         f.write("GMK Controller - Default Configuration 1".ljust(32).encode(BYTE_ENCODING))
         for config in config0:
@@ -252,6 +253,6 @@ if __name__ == "__main__":
             f.write(config_bytes)
             f.write(bytes([0xff]))
 
-    byte_cnt = os.path.getsize("config0.cfg")
+    byte_cnt = os.path.getsize("{}.cfg".format(config_name))
     print("Total bytes used in configuration: {} of {}. ({:0.2f}%)".format(byte_cnt, CONFIGURATION_SIZE, 100 * byte_cnt / CONFIGURATION_SIZE))
     

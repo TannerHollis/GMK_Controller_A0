@@ -1,7 +1,7 @@
 import serial
 import pygame
 import numpy
-from classes import *
+from gui_classes import *
 import time
 
 READ_BYTE_LENGTH = 64
