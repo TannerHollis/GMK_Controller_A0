@@ -16,6 +16,56 @@ INPUT_ENCODER_AS_KEYBOARD = 10
 INPUT_ENCODER_AS_TRIGGER = 11
 INPUT_NOT_CONFIGURED = 12
 
+#Define Input Button Mappings
+BUTTON_IN_0 = 0
+BUTTON_IN_1 = 1
+BUTTON_IN_2 = 2
+BUTTON_IN_3 = 3
+BUTTON_IN_4 = 4
+BUTTON_IN_5 = 5
+BUTTON_IN_6 = 6
+BUTTON_IN_7 = 7
+BUTTON_IN_8 = 8
+BUTTON_IN_9 = 9
+BUTTON_IN_10 = 10
+BUTTON_IN_11 = 11
+BUTTON_IN_12 = 12
+BUTTON_IN_13 = 13
+JOYSTICK_IN_0 = 0
+JOYSTICK_IN_1 = 1
+
+#Define Output Button Mappings
+BUTTON_A = 0
+BUTTON_B = 1
+BUTTON_X = 2
+BUTTON_Y = 3
+BUTTON_LB = 4
+BUTTON_RB = 5
+BUTTON_LTH = 6
+BUTTON_RTH = 7
+BUTTON_UP = 8
+BUTTON_DOWN = 9
+BUTTON_LEFT = 10
+BUTTON_RIGHT = 11
+BUTTON_START = 12
+BUTTON_BACK = 13
+JOYSTICK_LEFT = 0
+JOYSTICK_RIGHT = 0
+AXIS_X = 0
+AXIS_Y = 1
+AXIS_POSITIVE = 0
+AXIS_NEGATIVE = 1
+AXIS_NON_INVERTED = 0
+AXIS_INVERTED = 1
+TRIGGER_LEFT = 0
+TRIGGER_RIGHT = 1
+ENCODER_LINEAR_BASED = 0
+ENCODER_BINARY_BASED = 1
+ENCODER_DIRECTION_BASED = 0
+ENCODER_SPEED_BASED = 1
+ENCODER_DIR_CLOCKWISE = 0
+ENCODER_DIR_COUNTERCLOCKWISE = 1
+
 #Define configuration output byte formatting
 CONFIGURATION_SIZE = 2048
 CONFIG_NAME_LENGTH = 64
@@ -281,3 +331,29 @@ class Encoder_as_Trigger():
         self.struct = struct.pack(">BBfffB", self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, self.trigger_out)
         return self.struct
     
+if __name__ == "__main__":
+    print("Creating Default Joystick Configurations")
+    config0 = Controller_Configuration(0, "GMK Controller - Default Configuration 1", [LED_COLOR_CYAN, LED_COLOR_NONE, LED_COLOR_NONE, LED_COLOR_NONE])
+    config0.add_config(Button_as_Button(BUTTON_IN_0, BUTTON_A))
+    config0.add_config(Button_as_Button(BUTTON_IN_1, BUTTON_B))
+    config0.add_config(Button_as_Button(BUTTON_IN_2, BUTTON_X))
+    config0.add_config(Button_as_Button(BUTTON_IN_3, BUTTON_Y))
+    config0.add_config(Button_as_Button(BUTTON_IN_4, BUTTON_LB))
+    config0.add_config(Button_as_Button(BUTTON_IN_5, BUTTON_RB))
+    config0.add_config(Button_as_Button(BUTTON_IN_6, BUTTON_RTH))
+    config0.add_config(Button_as_Button(BUTTON_IN_7, BUTTON_RTH))
+    config0.add_config(Button_as_Button(BUTTON_IN_8, BUTTON_LEFT))
+    config0.add_config(Button_as_Button(BUTTON_IN_9, BUTTON_RIGHT))
+    config0.add_config(Button_as_Button(BUTTON_IN_10, BUTTON_START))
+    config0.add_config(Button_as_Button(BUTTON_IN_11, BUTTON_BACK))
+
+    config0.add_config(Button_as_Trigger(BUTTON_IN_12, TRIGGER_LEFT))
+    config0.add_config(Button_as_Trigger(BUTTON_IN_13, TRIGGER_RIGHT))
+
+    config0.add_config(Joystick_as_Joystick(JOYSTICK_IN_0, AXIS_NON_INVERTED, AXIS_NON_INVERTED, JOYSTICK_LEFT, 0.05, 0.05))
+    config0.add_config(Joystick_as_Joystick(JOYSTICK_IN_1, AXIS_NON_INVERTED, AXIS_NON_INVERTED, JOYSTICK_RIGHT, 0.05, 0.05))
+
+    config0.add_config(Encoder_as_Button(ENCODER_SPEED_BASED, ENCODER_DIR_CLOCKWISE, AXIS_NON_INVERTED, 1.0, BUTTON_LEFT))
+    config0.add_config(Encoder_as_Button(ENCODER_SPEED_BASED, ENCODER_DIR_COUNTERCLOCKWISE, AXIS_NON_INVERTED, 1.0, BUTTON_RIGHT))
+
+    config0.print_config_to_file("configs/")
