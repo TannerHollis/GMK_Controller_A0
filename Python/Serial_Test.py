@@ -5,11 +5,13 @@ from gui_classes import *
 from config_classes import *
 import time
 
-READ_BYTE_LENGTH = 64
+VERSION_STR_LENGTH = 24
+
+CONFIG_FILE_NAME = "configs/GMK Controller - Default Configuration 1.cfg"
 
 VID = 1155
 PID = 22336
-port_name = "COM5"
+port_name = "COM7"
 
 s = serial.Serial()
 s.baudrate = 192000
@@ -26,13 +28,22 @@ def open_device():
 
 def test_send():
     if s.isOpen():
-        s.write(b"0"*65)
-        print(s.read(READ_BYTE_LENGTH))
+        s.write(bytes([0]))
+        print(s.read(VERSION_STR_LENGTH))
 
 def test_read():
     if s.isOpen():
-        s.write(b"1" + b"0"*64)
-        print(s.read(25))
+        s.write(bytes([0x40]))
+        print(s.read(CONFIGURATION_SIZE))
+
+def test_write():
+    if s.isOpen():
+        config = bytes([0x80])
+        with open(CONFIG_FILE_NAME, "rb") as f:
+            config += f.read(CONFIGURATION_SIZE)
+            config += (CONFIGURATION_SIZE - len(config))*b"0"
+        s.write(config)
+        print("Wrote {} to Controller.".format(CONFIG_FILE_NAME))
     
 def validate_port():
     com_port.text = com_port.text[0:com_port.entry_length]
@@ -49,8 +60,11 @@ title = EdittableText(text_controller, "GMK Controller Serial Test", "", "", (wi
 test_send_button = Button(text_controller, "Test Device (Send 0x00)", (window_size[0]/2, 50), BLACK, 24, None, align="C", clickable=True)
 test_send_button.command = test_send
 
-test_read_config_button = Button(text_controller, "Test Read Config (Send 0x01)", (window_size[0]/2, 80), BLACK, 24, None, align="C", clickable=True)
+test_read_config_button = Button(text_controller, "Test Read Config (Send 0x40)", (window_size[0]/2, 80), BLACK, 24, None, align="C", clickable=True)
 test_read_config_button.command = test_read
+
+test_write_config_button = Button(text_controller, "Test Write Config (Send 0x80)", (window_size[0]/2, 110), BLACK, 24, None, align="C", clickable=True)
+test_write_config_button.command = test_write
 
 open_device_button = Button(text_controller, "Open Device", (window_size[0]/4, 200), BLACK, 24, None, align="C", clickable=True)
 open_device_button.command = open_device

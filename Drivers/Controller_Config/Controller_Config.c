@@ -12,7 +12,7 @@
 #include "ButtonSwitch.h"
 #include "RotaryEncoder.h"
 
-__attribute__((__section__(".user_data"))) const uint8_t controller_configs[CONTROLLER_CONFIG_PROFILES][CONTROLLER_CONFIG_LENGTH];
+__attribute__((__section__(".user_data"))) const uint8_t controller_configs[CONTROLLER_CONFIG_PROFILES][CONTROLLER_CONFIG_LENGTH] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 uint8_t controller_config_address;
 Controller_Config_HandleTypeDef controller_config;
 

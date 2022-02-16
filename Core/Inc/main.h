@@ -55,7 +55,7 @@ typedef enum {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
-static const char gmk_controller_id[] = "GMK Controller (Rev. A0)\n";
+static const char gmk_controller_id[] = "GMK Controller (Rev. A0)";
 
 /* USER CODE END EC */
 

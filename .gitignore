@@ -60,3 +60,7 @@ Debug/GMK_Controller_A0.list
 .settings/language.settings.xml
 *.pyc
 .settings/language.settings.xml
+Debug/GMK_Controller_A0.bin
+Debug/GMK_Controller_A0.list
+*.list
+*.bin
