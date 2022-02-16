@@ -1,6 +1,10 @@
 /*
  * Controller_Config.c
  *
+ *	To Use:
+ *		- Call Controller_Config_MapControllerData() when you want to update the controller data structure.
+ *		- Update function was measured to complete in about 47.6 uSeconds @ 72MHz.
+ *
  *  Created on: Feb 5, 2022
  *      Author: TannerGaming
  */
@@ -132,11 +136,24 @@ void Controller_Config_ClearControllerData(Controller_HandleTypeDef *c){
 	}
 }
 
+/*
+ * This function's processing time is dependant upon the total number of:
+ * 		1.	Active Input configurations
+ * 		2.	Complexity of each cconfiguration
+ * 			- Encoder mappings being the most demanding
+ * 			- Joystick mappings being the second-most demanding
+ * 			- Trigger mappings being the third-most demanding
+ * 			- Button mappings being the least demanding
+ *
+ * 		NOTE:
+ * 			The default (GMK default) configuration processing time is ~48us. The maximum output frequency is
+ * 			essentially determined by the processing time of this function.
+ *
+ */
 void Controller_Config_MapControllerData(Controller_HandleTypeDef *c){
 	//Clear Controller Data
 	Controller_Config_ClearControllerData(c);
 
-	// TODO: Time Function processing time
 	//Iterate through input configurations to compute output
 	for(uint8_t i = 0; i < CONTROLLER_CONFIG_INPUTS; i++){
 		Controller_Config_MapInputConfig(c, &(controller_config.input_configs[i]));
@@ -254,7 +271,7 @@ void Controller_Config_MapInputJoystickAsButton(Controller_HandleTypeDef *c, uin
 	uint8_t xy = GET_BIT(ic_buffer[0], 1);
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	uint8_t pn = GET_BIT(ic_buffer[0], 3);
-	float *threshold = (float *)(&ic_buffer[1]);
+	float threshold = *(float *)(&ic_buffer[1]);
 	float val;
 	if(xy){
 		val = (invert) ? joysticks[js_in].y.val : -joysticks[js_in].y.val;
@@ -262,7 +279,7 @@ void Controller_Config_MapInputJoystickAsButton(Controller_HandleTypeDef *c, uin
 	else{
 		val = (invert) ? joysticks[js_in].x.val : -joysticks[js_in].x.val;
 	}
-	c->buttons._bits |= (pn ? val < *threshold : val > *threshold) << ic_buffer[5];
+	c->buttons._bits |= (pn ? val < threshold : val > threshold) << ic_buffer[5];
 }
 
 /*
@@ -287,15 +304,15 @@ void Controller_Config_MapInputJoystickAsJoystick(Controller_HandleTypeDef *c, u
 	uint8_t invert_x = GET_BIT(ic_buffer[0], 1);
 	uint8_t invert_y = GET_BIT(ic_buffer[0], 2);
 	uint8_t js_out = GET_BIT(ic_buffer[0], 3);
-	float deadzone_x = (float)(*(float *)(&ic_buffer[1]));
-	float deadzone_y = (float)(*(float *)(&ic_buffer[5]));
+	float deadzone_x = *(float *)(&ic_buffer[1]);
+	float deadzone_y = *(float *)(&ic_buffer[5]);
 	float val_x = invert_x ? -joysticks[js_in].x.val : joysticks[js_in].x.val;
 	float val_y = invert_y ? -joysticks[js_in].y.val : joysticks[js_in].y.val;
 	if((val_x > deadzone_x) || (val_x < -deadzone_x)){
-		c->joysticks._bits[js_out*2 + 0] += (int16_t)(val_x * -INT16_MAX);
+		c->joysticks._bits[js_out*2 + 0] += (int16_t)val_x * -INT16_MIN;
 	}
 	if((val_y > deadzone_y) || (val_y < -deadzone_y)){
-		c->joysticks._bits[js_out*2 + 1] += (int16_t)(val_y * -INT16_MAX);
+		c->joysticks._bits[js_out*2 + 1] += (int16_t)val_y * -INT16_MIN;
 	}
 }
 
@@ -318,7 +335,7 @@ void Controller_Config_MapInputJoystickAsKeyboard(Controller_HandleTypeDef *c, u
 	uint8_t xy = GET_BIT(ic_buffer[0], 1);
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	uint8_t pn = GET_BIT(ic_buffer[0], 3);
-	float threshold = (float)(*(float *)(&ic_buffer[1]));
+	float threshold = *(float *)(&ic_buffer[1]);
 	float val;
 	if(xy){
 		val = (invert) ? joysticks[js].y.val : -joysticks[js].y.val;
@@ -351,7 +368,7 @@ void Controller_Config_MapInputJoystickAsTrigger(Controller_HandleTypeDef *c, ui
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	uint8_t pn = GET_BIT(ic_buffer[0], 3);
 	uint8_t tr_out = GET_BIT(ic_buffer[0], 4);
-	float threshold = (float)(*(float *)(&ic_buffer[1]));
+	float threshold = *(float *)(&ic_buffer[1]);
 	float val;
 	if(xy){
 		val = (invert) ? joysticks[js_in].y.val : -joysticks[js_in].y.val;
@@ -382,7 +399,7 @@ void Controller_Config_MapInputEncoderAsButton(Controller_HandleTypeDef *c, uint
 	uint8_t ccw = GET_BIT(ic_buffer[0], 1);
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
-	float speed_threshold = (float)(*(float *)(&ic_buffer[1]));
+	float speed_threshold = *(float *)(&ic_buffer[1]);
 	if(ccw && rotary_encoder->direction == dir){
 		if(speed_based)
 			c->buttons._bits |= (rotary_encoder->speed_rpm > speed_threshold) << ic_buffer[5];
@@ -423,9 +440,9 @@ void Controller_Config_MapInputEncoderAsJoystick(Controller_HandleTypeDef *c, ui
 	uint8_t ccw = GET_BIT(ic_buffer[0], 2);
 	uint8_t invert = GET_BIT(ic_buffer[0], 3);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
-	float speed_threshold = (float)(*(float *)(&ic_buffer[1]));
-	float linear_middle = (float)(*(float *)(&ic_buffer[5]));
-	float linear_deadzone = (float)(*(float *)(&ic_buffer[9]));
+	float speed_threshold = *(float *)(&ic_buffer[1]);
+	float linear_middle = *(float *)(&ic_buffer[5]);
+	float linear_deadzone = *(float *)(&ic_buffer[9]);
 	uint8_t js_out = GET_BIT(ic_buffer[13], 0);
 	uint8_t xy = GET_BIT(ic_buffer[13], 1);
 	uint8_t pn = GET_BIT(ic_buffer[13], 2);
@@ -461,7 +478,7 @@ void Controller_Config_MapInputEncoderAsKeyboard(Controller_HandleTypeDef *c, ui
 	uint8_t ccw = GET_BIT(ic_buffer[0], 1);
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
-	float speed_threshold = (float)(*(float *)(&ic_buffer[1]));
+	float speed_threshold = *(float *)(&ic_buffer[1]);
 	if(ccw && rotary_encoder->direction == dir){
 		if(speed_based){
 			if(rotary_encoder->speed_rpm > speed_threshold)
@@ -502,9 +519,9 @@ void Controller_Config_MapInputEncoderAsTrigger(Controller_HandleTypeDef *c, uin
 	uint8_t ccw = GET_BIT(ic_buffer[0], 2);
 	uint8_t invert = GET_BIT(ic_buffer[0], 3);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
-	float speed_threshold = (float)(*(float *)(&ic_buffer[1]));
-	float linear_middle = (float)(*(float *)(&ic_buffer[5]));
-	float linear_deadzone = (float)(*(float *)(&ic_buffer[9]));
+	float speed_threshold = *(float *)(&ic_buffer[1]);
+	float linear_middle = *(float *)(&ic_buffer[5]);
+	float linear_deadzone = *(float *)(&ic_buffer[9]);
 	uint8_t tr_out = GET_BIT(ic_buffer[13], 0);
 	if(binary_based){
 		if(ccw && rotary_encoder->direction == dir){

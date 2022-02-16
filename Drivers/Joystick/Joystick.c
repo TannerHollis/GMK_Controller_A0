@@ -6,6 +6,7 @@
  *			1. Initialize the Joystick by storing the adc buffer address to use.
  *			2. If auto calibration is desired, call this whenever.
  *			2. Upon ADC conversion complete, trigger the update.
+ *		- Update function was measured to complete in about 3.80 uSeconds @ 72MHz.
  *
  *  Created on: Jan 17, 2022
  *      Author: THollis
@@ -46,8 +47,6 @@ void Joystick_Calibrate(Joystick_HandleTypeDef *js, uint16_t iters, float weight
 }
 /**
   * @brief  Updated the Joystick parameters using the adc buffer.
-  * 			The total runtime for this function is:
-  * 				3.8us @ 84MHz CPU Clock
   *
   * @param  Joystick handle
   * @retval None

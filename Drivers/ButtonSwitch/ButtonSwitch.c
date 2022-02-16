@@ -4,7 +4,7 @@
  *	To Use:
  *		- Configure an update timer for debounce/long press counting
  *			- Consider using a separate timer to trigger the update function for CPU offloading.
- *			- Update function was measured to complete in about 2.56 uSeconds.
+ *			- Update function was measured to complete in about 2.76 uSeconds @ 72MHz.
  *
  *  Created on: Jan 14, 2022
  *      Author: THollis

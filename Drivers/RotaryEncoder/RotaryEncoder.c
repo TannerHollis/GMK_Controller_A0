@@ -9,6 +9,7 @@
  *			- Configure the counter period for 0.25s which triggers the update function.
  *		- Configure IRQs for each encoder pin to trigger the respective Update function.
  *			- Encoder calculations are also updated periodically on a separate timer for zero speed calculations.
+ *		- Update function was measured to complete in about 4.19 uSeconds @ 72MHz.
  *
  *  Created on: Jan 13, 2022
  *      Author: THollis

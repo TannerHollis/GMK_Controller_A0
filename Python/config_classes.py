@@ -113,6 +113,15 @@ class Controller_Configuration():
     def get_led_colors_bytes(self):
         return bytes(self.led_colors_bytes)
 
+    def led_bytes_to_colors(bytes_in):
+        led_colors = [0, 0, 0, 0]
+        led_colors[0] |= (bytes_in[0] >> 5) & 7
+        led_colors[1] |= (bytes_in[0] >> 2) & 7
+        led_colors[2] |= (bytes_in[0] << 1) & 7
+        led_colors[2] |= (bytes_in[1] >> 7) & 7
+        led_colors[3] |= (bytes_in[1] >> 1) & 7
+        return led_colors
+
     def print_config_to_file(self, path):
         #Check if folder exists
         if not os.path.isdir(path):
@@ -125,7 +134,7 @@ class Controller_Configuration():
             print("Writing to file: {}.cfg".format(file_path))
             f.write(bytes([self.profile_number]))
             f.write(self.get_led_colors_bytes())
-            f.write(self.config_name[:64].ljust(64, chr(0)).encode(BYTE_ENCODING))
+            f.write(self.config_name[:CONFIG_NAME_LENGTH].ljust(CONFIG_NAME_LENGTH, chr(0)).encode(BYTE_ENCODING))
             for config in self.configurations:
                 config_bytes = config.to_bytes()
                 f.write(config_bytes)
@@ -151,6 +160,24 @@ class Controller_Configuration():
                     f_txt.write("{}, ".format(byte))
             f_txt.write("}")
 
+    def from_bytes(bytes_in):
+        profile_number = struct.unpack("<B", bytes_in[0])
+        led_colors = Controller_Configuration.led_bytes_to_colors(struct.unpack("<BB", bytes_in[1:3]))
+        config_name = struct.unpack("<{}s".format(CONFIG_NAME_LENGTH), bytes_in[3:4+CONFIG_NAME_LENGTH])
+        cc = Controller_Configuration(profile_number, config_name, led_colors)
+        config_start = True
+        for i range(4 + CONFIG_NAME_LENGTH, len(bytes_in)):
+            if(config_start)
+                t = bytes_in[i]
+                config_start = False
+            if bytes_in[i] == 255:
+                config_start = True
+                cc.add_config()
+
+    def parse_config_from_bytes(t, bytes_in,byte_length):
+        if t == INPUT_BUTTON_AS_BUTTON:
+            return ()
+
 class Button_as_Button():
     def __init__(self, button_in, button_out):
         self.button_in = button_in
@@ -161,6 +188,10 @@ class Button_as_Button():
     def to_bytes(self):
         self.struct = struct.pack("<BBB", self.type, self.button_in, self.button_out)
         return self.struct
+
+    def from_bytes(bytes_in):
+        (t, button_in, button_out) = struct.unpack("<BBB", bytes_in)
+        return Button_as_Button(button_in, button_out)
 
 class Button_as_Joystick():
     def __init__(self, button_in, joystick_lr, axis_xy, pos_neg):
@@ -178,6 +209,13 @@ class Button_as_Joystick():
         self.struct = struct.pack("<BBB", self.type, self.button_in, b1)
         return self.struct
 
+    def from_bytes(bytes_in):
+        (t, button_in, b1) = struct.unpack("<BBB", bytes_in)
+        joystick_lr = (b1 >> 0) & 1
+        axis_xy = (b1 >> 1) & 1
+        pos_neg = (b1 >> 2) & 1
+        return Button_as_Joystick(button_in, joystick_lr, axis_xy, pos_neg)
+
 class Button_as_Keyboard():
     def __init__(self, button_in, string):
         self.button_in = button_in
@@ -189,6 +227,10 @@ class Button_as_Keyboard():
         self.struct = struct.pack("<BB{}s".format(len(self.string)), self.type, self.button_in, bytes(self.string, BYTE_ENCODING))
         return self.struct
 
+    def from_bytes(bytes_in, str_len):
+        (t, button_in, string) = struct.unpack("<BB{}s".format(str_len), bytes_in)
+        return Button_as_Keyboard(button_in, string)
+
 class Button_as_Trigger():
     def __init__(self, button_in, trigger_lr):
         self.button_in = button_in
@@ -199,6 +241,10 @@ class Button_as_Trigger():
     def to_bytes(self):
         self.struct = struct.pack("<BBB", self.type, self.button_in, self.trigger_lr)
         return self.struct
+
+    def from_bytes(bytes_in):
+        (t, button_in, trigger_lr) = struct.unpack("<BBB", bytes_in)
+        return Button_as_Trigger(button_in, trigger_lr)
 
 class Joystick_as_Button():
     def __init__(self, joystick_lr, axis_xy, invert, pos_neg, threshold, button_out):
@@ -220,6 +266,13 @@ class Joystick_as_Button():
         self.struct = struct.pack("<BBfB", self.type, b0, self.threshold, self.button_out)
         return self.struct
 
+    def from_bytes(bytes_in):
+        (t, b0, threshold, button_out) = struct.unpack("<BBfB", bytes_in)
+        axis_xy = (b0 >> 0) & 1
+        invert = (b0 >> 1) & 1
+        pos_neg = (b0 >> 2) & 1
+        return Joystick_as_Button(joystick_lr, axis_xy, invert, pos_neg, threshold, button_out)
+
 class Joystick_as_Joystick():
     def __init__(self, joystick_in, invert_x, invert_y, joystick_out, deadzone_x, deadzone_y):
         self.joystick_in = joystick_in
@@ -240,6 +293,14 @@ class Joystick_as_Joystick():
         self.struct = struct.pack("<BBff", self.type, b0, self.deadzone_x, self.deadzone_y)
         return self.struct
 
+    def from_bytes(bytes_in):
+        (t, b0, deadzone_x, deadzone_y) = struct.unpack("<BBff", bytes_in)
+        joystick_in = (b0 >> 0) & 1
+        invert_x = (b0 >> 1) & 1
+        invert_y = (b0 >> 2) & 1
+        joystick_out = (b0 >> 3) & 1
+        return Joystick_as_Joystick(joystick_in, invert_x, invert_y, joystick_out, deadzone_x, deadzone_y)
+
 class Joystick_as_Keyboard():
     def __init__(self, joystick_in, axis_xy, invert, pos_neg, threshold, string):
         self.joystick_in = joystick_in
@@ -258,6 +319,14 @@ class Joystick_as_Keyboard():
         b0 |= self.pos_neg << 3
         self.struct = struct.pack("<BBf{}s".format(len(self.string)), self.type, b0, self.threshold, bytes(self.string, BYTE_ENCODING))
         return self.struct
+
+    def from_bytes(bytes_in, str_len):
+        (t, b0, threshold, string) = struct.unpack("<BBf{}s".format(str_len), bytes_in)
+        joystick_in = (b0 >> 0) & 1
+        axis_xy = (b0 >> 1) & 1
+        invert = (b0 >> 2) & 1
+        pos_neg = (b0 >> 3) & 1
+        return Joystick_as_Keyboard(joystick_in, axis_xy, invert, pos_neg, threshold, string)
 
 class Joystick_as_Trigger():
     def __init__(self, joystick_in, axis_xy, invert, pos_neg, trigger_out, threshold):
@@ -280,6 +349,15 @@ class Joystick_as_Trigger():
         self.struct = struct.pack("<BBf".format(len(self.string)), self.type, b0, self.threshold)
         return self.struct
 
+    def from_bytes(bytes_in):
+        (t, b0, threshold) = struct.unpack("<BBf", bytes_in)
+        joystick_in = (b0 >> 0) & 1
+        axis_xy = (b0 >> 1) & 1
+        invert = (b0 >> 2) & 1
+        pos_neg = (b0 >> 3) & 1
+        trigger_out = (b0 >> 4) & 1
+        return Joystick_as_Trigger(joystick_in, axis_xy, invert, pos_neg, trigger_out)
+
 class Encoder_as_Button():
     def __init__(self, speed_based, ccw, invert, threshold, button_out):
         self.speed_based = speed_based
@@ -297,6 +375,13 @@ class Encoder_as_Button():
         b0 |= self.invert << 2
         self.struct = struct.pack("<BBfB", self.type, b0, self.threshold, self.button_out)
         return self.struct
+
+    def from_bytes(bytes_in):
+        (t, b0, threshold, button_out) = struct.unpack("<BBfB", bytes_in)
+        speed_based = (b0 >> 0) & 1
+        ccw = (b0 >> 1) & 1
+        invert = (b0 >> 2) & 1
+        return Encoder_as_Button(speed_based, ccw, invert, threshold, button_out)
 
 class Encoder_as_Joystick():
     def __init__(self, binary_based, speed_based, ccw, invert, speed_threshold, linear_middle, linear_deadzone, joystick_out, axis_xy, pos_neg):
@@ -326,6 +411,42 @@ class Encoder_as_Joystick():
         self.struct = struct.pack("<BBfffB".format(len(self.string)), self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, b13)
         return self.struct
 
+    def from_bytes(bytes_in):
+        (t, b0, speed_threshold, linear_middle, linear_deadzone, b13) = struct.unpack("<BBfffB", bytes_in)
+        binary_based = (b0 >> 0) & 1
+        speed_based = (b0 >> 1) & 1
+        ccw = (b0 >> 2) & 1
+        invert = (b0 >> 3) & 1
+        joystick_out = (b13 >> 0) & 1
+        axis_xy = (b13 >> 1) & 1
+        pos_neg = (b13 >> 2) & 1
+        return Encoder_as_Joystick(binary_based, speed_based, ccw, invert, speed_threshold, linear_middle, linear_deadzone, joystick_out, axis_xy, pos_neg)
+
+class Encoder_as_Keyboard():
+    def __init__(self, speed_based, ccw, invert, threshold, string):
+        self.speed_based = speed_based
+        self.ccw = ccw
+        self.invert = invert
+        self.threshold = float(threshold)
+        self.string = string
+        self.type = INPUT_ENCODER_AS_KEYBOARD
+        self.struct = b""
+
+    def to_bytes(self):
+        b0 = 0
+        b0 |= self.speed_based << 0
+        b0 |= self.ccw << 1
+        b0 |= self.invert << 2
+        self.struct = struct.pack("<BBf{}s".format(len(self.string)), self.type, b0, self.threshold, self.string)
+        return self.struct
+
+    def from_bytes(bytes_in, str_len):
+        (t, b0, threshold, string) = struct.unpack("<BBfB{}s".format(str_len), bytes_in)
+        speed_based = (b0 >> 0) & 1
+        ccw = (b0 >> 1) & 1
+        invert = (b0 >> 2) & 1
+        return Encoder_as_Keyboard(speed_based, ccw, invert, threshold, string)
+
 class Encoder_as_Trigger():
     def __init__(self, binary_based, speed_based, ccw, invert, speed_threshold, linear_middle, linear_deadzone, trigger_out):
         self.speed_based = speed_based
@@ -346,6 +467,14 @@ class Encoder_as_Trigger():
         b0 |= self.invert << 3
         self.struct = struct.pack("<BBfffB", self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, self.trigger_out)
         return self.struct
+
+    def from_bytes(bytes_in):
+        (t, b0, speed_threshold, linear_middle, linear_deadzone, trigger_out) = struct.unpack("<BBfffB", bytes_in)
+        binary_based = (b0 >> 0) & 1
+        speed_based = (b0 >> 1) & 1
+        ccw = (b0 >> 2) & 1
+        invert = (b0 >> 3) & 1
+        return Encoder_as_Trigger(binary_based, speed_based, ccw, invert, speed_threshold, linear_middle, linear_deadzone, trigger_out)
     
 if __name__ == "__main__":
     print("Creating Default Joystick Configurations")

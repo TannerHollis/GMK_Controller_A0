@@ -57,6 +57,7 @@ SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
 
@@ -100,6 +101,7 @@ static void MX_SPI1_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -142,6 +144,7 @@ int main(void)
   MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
   //Initialize USB
@@ -150,6 +153,7 @@ int main(void)
 
   //Start Timer 2
   HAL_TIM_Base_Start(&htim2);
+  HAL_TIM_Base_Start(&htim3);
 
   //Start OC Timer 1 channels 1 through 4
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
@@ -183,7 +187,7 @@ int main(void)
   //Get Controller Config
   Controller_Config_GetConfig(controller_config_profile);
 
-  uint32_t function_time = 0;
+  uint16_t function_time = 0;
 
   /* USER CODE END 2 */
 
@@ -199,22 +203,19 @@ int main(void)
 	switch(event_state[event_index_read]){
 		case EVENT_WAIT:
 			UpdateAllButtons(); //Read Button States
-			Serial_Comm_CheckMessages(); //Read incoming messages
 			break;
 		case TIM_EVENT_1:
-			RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
-			RotaryEncoder_ClearPeakSpeed(&rotary_encoder); //Clear peak speed before controller formatting
-			break;
-		case TIM_EVENT_2:
 			HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4); //Trigger Joystick ADC read
 			break;
+		case TIM_EVENT_2:
+			Serial_Comm_CheckMessages(); //Read incoming messages
+			break;
 		case TIM_EVENT_3:
-			function_time = htim2.Instance->CNT;
 			Controller_Config_MapControllerData(&controller); //Map Controller Configuration Data
-			function_time = htim2.Instance->CNT - function_time;
 			break;
 		case TIM_EVENT_4:
 			//_write(0, &controller, sizeof(controller)); //Write to USB
+			RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
 			break;
 		case ADC_EVENT_UPDATE:
 			Joystick_Update(&(joysticks[0]));
@@ -233,10 +234,11 @@ int main(void)
 			// TODO: Implement a Send Gamepad Event via HID
 			break;
 	}
-	event_state[event_index_read] = EVENT_WAIT;
 	if(event_index_read != event_index_write){
 		event_index_read = (event_index_read + 1) % EVENT_BUFFER_LENGTH;
 	}
+	else
+		write_next_event_state(EVENT_WAIT);
 	event_difference = (event_index_write >= event_index_read) ? event_index_write - event_index_read : event_index_write + (UINT8_MAX - event_index_read);
     /* USER CODE END WHILE */
 
@@ -327,13 +329,14 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_84CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
+  sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -341,6 +344,7 @@ static void MX_ADC1_Init(void)
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
+  sConfig.Channel = ADC_CHANNEL_2;
   sConfig.Rank = 3;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -348,6 +352,7 @@ static void MX_ADC1_Init(void)
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
+  sConfig.Channel = ADC_CHANNEL_3;
   sConfig.Rank = 4;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -382,7 +387,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -512,7 +517,7 @@ static void MX_TIM2_Init(void)
   htim2.Init.Prescaler = 35999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 4294967295;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
@@ -532,6 +537,51 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 65535;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 

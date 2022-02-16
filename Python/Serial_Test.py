@@ -14,7 +14,7 @@ PID = 22336
 port_name = "COM7"
 
 s = serial.Serial()
-s.baudrate = 192000
+s.baudrate = 38400
 s.port = port_name
 s.parity = "N"
 

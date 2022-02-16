@@ -43,7 +43,7 @@ const USBD_DescriptionType hdev_cfg = {
 }, *const dev_cfg = &hdev_cfg;
 
 const USBD_CDC_LineCodingType lc = {
-		.DTERate = 9600,
+		.DTERate = 38400,
 		.CharFormat = 1,
 		.ParityType = 1,
 		.DataBits = 8,
