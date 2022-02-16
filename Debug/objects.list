@@ -11,6 +11,7 @@
 "./Drivers/ButtonSwitch/ButtonSwitch.o"
 "./Drivers/Controller_Config/Controller_Config.o"
 "./Drivers/Joystick/Joystick.o"
+"./Drivers/LED_Controller/led_controller.o"
 "./Drivers/RotaryEncoder/RotaryEncoder.o"
 "./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o"
 "./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.o"

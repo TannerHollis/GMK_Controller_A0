@@ -41,8 +41,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define STDOUT_BUFFER_SIZE 1024
-#define STDIN_BUFFER_SIZE 1024
+#define STDOUT_BUFFER_SIZE 512
+#define STDIN_BUFFER_SIZE 512
 
 #undef errno
 extern int32_t errno;
@@ -85,7 +85,7 @@ static void console_if_recv         (void);
 
 static const USBD_CDC_AppType console_app =
 {
-    .Name           = "Serial port as standard I/O",
+    .Name           = "GMK Controller Configuration Serial Port",
     .Open           = console_if_open,
 #if (STDIN_BUFFER_SIZE > 0)
     .Received       = console_if_out_cmplt,

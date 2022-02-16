@@ -26,7 +26,7 @@
 /** @brief USB device configuration */
 const USBD_DescriptionType hdev_cfg = {
     .Vendor = {
-        .Name           = "GMK",
+        .Name           = "STMicroelectronics",
         .ID             = 0x0483,
     },
     .Product = {

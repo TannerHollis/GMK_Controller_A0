@@ -168,6 +168,7 @@ void Controller_Config_MapInputConfig(Controller_HandleTypeDef *c, Input_Config_
 			break;
 		case INPUT_JOYSTICK_AS_TRIGGER:
 			Controller_Config_MapInputJoystickAsJoystick(c, &(controller_config.config_buffer[ic->addr_start]));
+			break;
 		case INPUT_ENCODER_AS_BUTTON:
 			Controller_Config_MapInputEncoderAsButton(c, &(controller_config.config_buffer[ic->addr_start]));
 			break;

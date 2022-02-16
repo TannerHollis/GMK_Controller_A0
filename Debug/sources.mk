@@ -25,6 +25,7 @@ Core/Startup \
 Drivers/ButtonSwitch \
 Drivers/Controller_Config \
 Drivers/Joystick \
+Drivers/LED_Controller \
 Drivers/RotaryEncoder \
 Drivers/STM32F4xx_HAL_Driver/Src \
 Drivers/Serial_Comm \

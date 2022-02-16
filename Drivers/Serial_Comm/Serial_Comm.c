@@ -14,7 +14,7 @@ uint8_t buffer_in[CONTROLLER_CONFIG_LENGTH + 1];
 uint8_t buffer_out[CONTROLLER_CONFIG_LENGTH + 1];
 
 void Serial_Comm_CheckMessages(){
-	uint8_t retval;
+	int16_t retval;
 
 	//Read from buffer
 	retval = _read(0, (uint8_t *)buffer_in, sizeof(buffer_in));

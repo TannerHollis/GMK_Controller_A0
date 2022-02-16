@@ -48,7 +48,7 @@
  * Supported values are: 0, 1, 2
  * @note Microsoft OS 2.0 descriptors are supported by Windows 8.1 and higher.
  * Unless the device is required to operate on earlier Windows OS versions, use version 2. */
-#define USBD_MS_OS_DESC_VERSION     0
+#define USBD_MS_OS_DESC_VERSION     2
 
 
 /** @brief Set to 1 if notifications are sent by a CDC-ACM interface.

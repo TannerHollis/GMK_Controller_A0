@@ -64,6 +64,7 @@ TIM_HandleTypeDef htim2;
 State_TypeDef event_state[EVENT_BUFFER_LENGTH];
 uint8_t event_index_read = 0;
 uint8_t event_index_write = 0;
+uint8_t event_difference = 0;
 
 //Keyboard Event buffer (FIFO) to store keyboard event addresses and string lengths
 uint8_t *keyboard_event_string_addresses[KEYBOARD_EVENT_BUFFER_LENGTH];
@@ -147,11 +148,10 @@ int main(void)
   HAL_USBD_Setup();
   UsbDevice_Init();
 
-  //Start Timer
-  HAL_TIM_Base_Start(&htim1);
+  //Start Timer 2
   HAL_TIM_Base_Start(&htim2);
 
-  //Start OC Timer channels 1 through 4
+  //Start OC Timer 1 channels 1 through 4
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_2);
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_3);
@@ -197,6 +197,7 @@ int main(void)
 	switch(event_state[event_index_read]){
 		case EVENT_WAIT:
 			UpdateAllButtons(); //Read Button States
+			Serial_Comm_CheckMessages(); //Read incoming messages
 			break;
 		case TIM_EVENT_1:
 			RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
@@ -209,7 +210,7 @@ int main(void)
 			Controller_Config_MapControllerData(&controller); //Map Controller Configuration Data
 			break;
 		case TIM_EVENT_4:
-			_write(0, &controller, sizeof(controller)); //Write to USB
+			//_write(0, &controller, sizeof(controller)); //Write to USB
 			break;
 		case ADC_EVENT_UPDATE:
 			Joystick_Update(&(joysticks[0]));
@@ -221,7 +222,7 @@ int main(void)
 		case USB_EVENT_HID_KEYBOARD_UPDATE:
 			if(keyboard_event_index_write != keyboard_event_index_read){
 				// TODO: Implement a Send Keyboard Event via HID
-				event_index_read = (event_index_read + 1) & KEYBOARD_EVENT_BUFFER_LENGTH;
+				event_index_read = (event_index_read + 1) % KEYBOARD_EVENT_BUFFER_LENGTH;
 			}
 			break;
 		case USB_EVENT_HID_GAMEPAD_UPDATE:
@@ -230,8 +231,9 @@ int main(void)
 	}
 	event_state[event_index_read] = EVENT_WAIT;
 	if(event_index_read != event_index_write){
-		event_index_read = (event_index_read + 1) & EVENT_BUFFER_LENGTH;
+		event_index_read = (event_index_read + 1) % EVENT_BUFFER_LENGTH;
 	}
+	event_difference = (event_index_write >= event_index_read) ? event_index_write - event_index_read : event_index_write + (UINT8_MAX - event_index_read);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -417,7 +419,7 @@ static void MX_TIM1_Init(void)
   htim1.Init.Period = 3599;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
   {
     Error_Handler();
@@ -540,7 +542,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
@@ -564,7 +566,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(R_CLK_GPIO_Port, R_CLK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(nOE_GPIO_Port, nOE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(nOE_GPIO_Port, nOE_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : SW_B_Pin SW_Y_Pin SW_RT_Pin */
   GPIO_InitStruct.Pin = SW_B_Pin|SW_Y_Pin|SW_RT_Pin;
@@ -613,7 +615,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(ENCODER_B_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
@@ -628,7 +630,7 @@ void UpdateAllButtons(){
 
 //Increment event_index_write and write to next event_state in buffer
 void write_next_event_state(State_TypeDef next_state){
-	event_index_write = (event_index_write + 1) & EVENT_BUFFER_LENGTH;
+	event_index_write = (event_index_write + 1) % EVENT_BUFFER_LENGTH;
 	event_state[event_index_write] = next_state;
 }
 
@@ -637,14 +639,14 @@ void write_next_keyboard_event_state(uint8_t *string_address, uint8_t string_len
 	write_next_event_state(USB_EVENT_HID_KEYBOARD_UPDATE);
 	keyboard_event_string_addresses[keyboard_event_index_write] = string_address;
 	keyboard_event_string_lengths[keyboard_event_index_write] = string_length;
-	event_index_write = (keyboard_event_index_write + 1) & KEYBOARD_EVENT_BUFFER_LENGTH;
+	event_index_write = (keyboard_event_index_write + 1) % KEYBOARD_EVENT_BUFFER_LENGTH;
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc){
 	write_next_event_state(ADC_EVENT_UPDATE);
 }
 
-void HAL_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
 	switch(htim->Channel){
 		case HAL_TIM_ACTIVE_CHANNEL_1:
 			write_next_event_state(TIM_EVENT_1);

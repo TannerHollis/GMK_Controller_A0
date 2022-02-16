@@ -2,6 +2,7 @@ import serial
 import pygame
 import numpy
 from gui_classes import *
+from config_classes import *
 import time
 
 READ_BYTE_LENGTH = 64
@@ -26,14 +27,12 @@ def open_device():
 def test_send():
     if s.isOpen():
         s.write(b"0"*65)
-        time.sleep(.25)
         print(s.read(READ_BYTE_LENGTH))
 
 def test_read():
     if s.isOpen():
         s.write(b"1" + b"0"*64)
-        #time.sleep(.25)
-        print(s.read(READ_BYTE_LENGTH))
+        print(s.read(25))
     
 def validate_port():
     com_port.text = com_port.text[0:com_port.entry_length]
