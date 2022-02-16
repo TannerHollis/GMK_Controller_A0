@@ -166,17 +166,19 @@ class Controller_Configuration():
         config_name = struct.unpack("<{}s".format(CONFIG_NAME_LENGTH), bytes_in[3:4+CONFIG_NAME_LENGTH])
         cc = Controller_Configuration(profile_number, config_name, led_colors)
         config_start = True
+        config_start_add = 0
         for i range(4 + CONFIG_NAME_LENGTH, len(bytes_in)):
             if(config_start)
                 t = bytes_in[i]
                 config_start = False
+                config_start_add = i
             if bytes_in[i] == 255:
                 config_start = True
-                cc.add_config()
+                cc.add_config(Controller_Configuration.parse_config_from_bytes(t, bytes_in[config_start_add : i]))
 
-    def parse_config_from_bytes(t, bytes_in,byte_length):
+    def parse_config_from_bytes(t, bytes_in):
         if t == INPUT_BUTTON_AS_BUTTON:
-            return ()
+            return Button_as_Button.from_bytes(bytes_in)
 
 class Button_as_Button():
     def __init__(self, button_in, button_out):
