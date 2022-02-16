@@ -12,7 +12,7 @@
 #include "ButtonSwitch.h"
 #include "RotaryEncoder.h"
 
-__attribute__((__section__(".user_data"))) const uint8_t controller_configs[CONTROLLER_CONFIG_PROFILES][CONTROLLER_CONFIG_LENGTH] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+__attribute__((__section__(".user_data"))) const uint8_t controller_configs[CONTROLLER_CONFIG_PROFILES][CONTROLLER_CONFIG_LENGTH] = { 0, 192, 0, 71, 77, 75, 32, 67, 111, 110, 116, 114, 111, 108, 108, 101, 114, 32, 45, 32, 68, 101, 102, 97, 117, 108, 116, 32, 67, 111, 110, 102, 105, 103, 117, 114, 97, 116, 105, 111, 110, 32, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 1, 1, 255, 0, 2, 2, 255, 0, 3, 3, 255, 0, 4, 4, 255, 0, 5, 5, 255, 0, 6, 7, 255, 0, 7, 7, 255, 0, 8, 10, 255, 0, 9, 11, 255, 0, 10, 12, 255, 0, 11, 13, 255, 3, 12, 0, 255, 3, 13, 1, 255, 5, 0, 205, 204, 76, 61, 205, 204, 76, 61, 255, 5, 1, 205, 204, 76, 61, 205, 204, 76, 61, 255, 8, 1, 0, 0, 128, 63, 10, 255, 8, 3, 0, 0, 128, 63, 11, 255, };
 uint8_t controller_config_address;
 Controller_Config_HandleTypeDef controller_config;
 
@@ -91,11 +91,11 @@ void Controller_Config_GetConfig(uint8_t config_profile){
 	controller_config_address = config_profile * CONTROLLER_CONFIG_LENGTH;
 
 	//Store configuration buffer address, profile number and name into config
-	controller_config.config_buffer = (uint8_t *)(controller_configs[controller_config_address]);
-	controller_config.profile = (uint8_t)(*controller_configs[controller_config_address]);
-	controller_config.led_color[0] = (uint8_t)(*controller_configs[controller_config_address + 1]);
-	controller_config.led_color[1] = (uint8_t)(*controller_configs[controller_config_address + 2]);
-	controller_config.name = (char *)(controller_configs[controller_config_address + 3]);
+	controller_config.config_buffer = (uint8_t *)(&(controller_configs[config_profile][0]));
+	controller_config.profile = (uint8_t)(controller_configs[config_profile][0]);
+	controller_config.led_color[0] = (uint8_t)(controller_configs[config_profile][1]);
+	controller_config.led_color[1] = (uint8_t)(controller_configs[config_profile][2]);
+	controller_config.name = (char *)(&(controller_configs[config_profile][3]));
 
 	//Declare input configuration counter
 	uint8_t input_config_index = 0;
@@ -287,12 +287,16 @@ void Controller_Config_MapInputJoystickAsJoystick(Controller_HandleTypeDef *c, u
 	uint8_t invert_x = GET_BIT(ic_buffer[0], 1);
 	uint8_t invert_y = GET_BIT(ic_buffer[0], 2);
 	uint8_t js_out = GET_BIT(ic_buffer[0], 3);
-	float *deadzone_x = (float *)(&ic_buffer[1]);
-	float *deadzone_y = (float *)(&ic_buffer[5]);
-	float val_x = invert_x ? joysticks[js_in].x.val : -joysticks[js_in].x.val;
-	float val_y = invert_y ? joysticks[js_in].y.val : -joysticks[js_in].y.val;
-	c->joysticks._bits[js_out*2 + 0] += ((val_x > *deadzone_x || val_x < -*deadzone_x) ? val_x : 0) * -INT16_MIN;
-	c->joysticks._bits[js_out*2 + 1] += ((val_y > *deadzone_y || val_y < -*deadzone_y) ? val_y : 0) * -INT16_MIN;
+	float deadzone_x = (float)(*(float *)(&ic_buffer[1]));
+	float deadzone_y = (float)(*(float *)(&ic_buffer[5]));
+	float val_x = invert_x ? -joysticks[js_in].x.val : joysticks[js_in].x.val;
+	float val_y = invert_y ? -joysticks[js_in].y.val : joysticks[js_in].y.val;
+	if((val_x > deadzone_x) || (val_x < -deadzone_x)){
+		c->joysticks._bits[js_out*2 + 0] += (int16_t)(val_x * -INT16_MAX);
+	}
+	if((val_y > deadzone_y) || (val_y < -deadzone_y)){
+		c->joysticks._bits[js_out*2 + 1] += (int16_t)(val_y * -INT16_MAX);
+	}
 }
 
 /*
@@ -314,7 +318,7 @@ void Controller_Config_MapInputJoystickAsKeyboard(Controller_HandleTypeDef *c, u
 	uint8_t xy = GET_BIT(ic_buffer[0], 1);
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	uint8_t pn = GET_BIT(ic_buffer[0], 3);
-	float *threshold = (float *)(&ic_buffer[1]);
+	float threshold = (float)(*(float *)(&ic_buffer[1]));
 	float val;
 	if(xy){
 		val = (invert) ? joysticks[js].y.val : -joysticks[js].y.val;
@@ -322,7 +326,7 @@ void Controller_Config_MapInputJoystickAsKeyboard(Controller_HandleTypeDef *c, u
 	else{
 		val = (invert) ? joysticks[js].x.val : -joysticks[js].x.val;
 	}
-	if(pn ? val < *threshold : val > *threshold){
+	if(pn ? val < threshold : val > threshold){
 		write_next_keyboard_event_state(&(ic_buffer[5]), str_length - 5);
 	}
 }
@@ -347,7 +351,7 @@ void Controller_Config_MapInputJoystickAsTrigger(Controller_HandleTypeDef *c, ui
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	uint8_t pn = GET_BIT(ic_buffer[0], 3);
 	uint8_t tr_out = GET_BIT(ic_buffer[0], 4);
-	float *threshold = (float *)(&ic_buffer[1]);
+	float threshold = (float)(*(float *)(&ic_buffer[1]));
 	float val;
 	if(xy){
 		val = (invert) ? joysticks[js_in].y.val : -joysticks[js_in].y.val;
@@ -355,7 +359,7 @@ void Controller_Config_MapInputJoystickAsTrigger(Controller_HandleTypeDef *c, ui
 	else{
 		val = (invert) ? joysticks[js_in].x.val : -joysticks[js_in].x.val;
 	}
-	if(pn ? val < *threshold : val > *threshold){
+	if(pn ? val < threshold : val > threshold){
 		c->triggers._bits[tr_out] += val * UINT8_MAX;
 	}
 }
@@ -378,10 +382,10 @@ void Controller_Config_MapInputEncoderAsButton(Controller_HandleTypeDef *c, uint
 	uint8_t ccw = GET_BIT(ic_buffer[0], 1);
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
-	float *speed_threshold = (float *)(&ic_buffer[1]);
+	float speed_threshold = (float)(*(float *)(&ic_buffer[1]));
 	if(ccw && rotary_encoder->direction == dir){
 		if(speed_based)
-			c->buttons._bits |= (rotary_encoder->speed_rpm > *speed_threshold) << ic_buffer[5];
+			c->buttons._bits |= (rotary_encoder->speed_rpm > speed_threshold) << ic_buffer[5];
 		else
 			c->buttons._bits |= 0x01 << ic_buffer[5];
 	}
@@ -419,23 +423,23 @@ void Controller_Config_MapInputEncoderAsJoystick(Controller_HandleTypeDef *c, ui
 	uint8_t ccw = GET_BIT(ic_buffer[0], 2);
 	uint8_t invert = GET_BIT(ic_buffer[0], 3);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
-	float *speed_threshold = (float *)(&ic_buffer[1]);
-	float *linear_middle = (float *)(&ic_buffer[5]);
-	float *linear_deadzone = (float *)(&ic_buffer[9]);
+	float speed_threshold = (float)(*(float *)(&ic_buffer[1]));
+	float linear_middle = (float)(*(float *)(&ic_buffer[5]));
+	float linear_deadzone = (float)(*(float *)(&ic_buffer[9]));
 	uint8_t js_out = GET_BIT(ic_buffer[13], 0);
 	uint8_t xy = GET_BIT(ic_buffer[13], 1);
 	uint8_t pn = GET_BIT(ic_buffer[13], 2);
 	if(binary_based){
 		if(ccw && rotary_encoder->direction == dir){
 			if(speed_based)
-				c->joysticks._bits[js_out*2 + xy] += (pn ? INT16_MIN : INT16_MAX) * (int16_t)(rotary_encoder->speed_rpm > *speed_threshold);
+				c->joysticks._bits[js_out*2 + xy] += (pn ? INT16_MIN : INT16_MAX) * (int16_t)(rotary_encoder->speed_rpm > speed_threshold);
 			else
 				c->joysticks._bits[js_out*2 + xy] += (pn ? INT16_MIN : INT16_MAX);
 		}
 	}
 	else{
-		float val = rotary_encoder->position_linear - *linear_middle;
-		c->joysticks._bits[js_out*2 + xy] += (val > *linear_deadzone || val < -*linear_deadzone) ? ((invert) ? val * INT16_MIN : val * -INT16_MIN) : 0;
+		float val = rotary_encoder->position_linear - linear_middle;
+		c->joysticks._bits[js_out*2 + xy] += (val > linear_deadzone || val < -linear_deadzone) ? ((invert) ? val * INT16_MIN : val * -INT16_MIN) : 0;
 	}
 }
 
@@ -457,10 +461,10 @@ void Controller_Config_MapInputEncoderAsKeyboard(Controller_HandleTypeDef *c, ui
 	uint8_t ccw = GET_BIT(ic_buffer[0], 1);
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
-	float *speed_threshold = (float *)(&ic_buffer[1]);
+	float speed_threshold = (float)(*(float *)(&ic_buffer[1]));
 	if(ccw && rotary_encoder->direction == dir){
 		if(speed_based){
-			if(rotary_encoder->speed_rpm > *speed_threshold)
+			if(rotary_encoder->speed_rpm > speed_threshold)
 				write_next_keyboard_event_state(&(ic_buffer[5]), str_length - 5);
 		}
 		else
@@ -498,20 +502,20 @@ void Controller_Config_MapInputEncoderAsTrigger(Controller_HandleTypeDef *c, uin
 	uint8_t ccw = GET_BIT(ic_buffer[0], 2);
 	uint8_t invert = GET_BIT(ic_buffer[0], 3);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
-	float *speed_threshold = (float *)(&ic_buffer[1]);
-	float *linear_middle = (float *)(&ic_buffer[5]);
-	float *linear_deadzone = (float *)(&ic_buffer[9]);
+	float speed_threshold = (float)(*(float *)(&ic_buffer[1]));
+	float linear_middle = (float)(*(float *)(&ic_buffer[5]));
+	float linear_deadzone = (float)(*(float *)(&ic_buffer[9]));
 	uint8_t tr_out = GET_BIT(ic_buffer[13], 0);
 	if(binary_based){
 		if(ccw && rotary_encoder->direction == dir){
 			if(speed_based)
-				c->triggers._bits[tr_out] += UINT8_MAX * (int16_t)(rotary_encoder->speed_rpm > *speed_threshold);
+				c->triggers._bits[tr_out] += UINT8_MAX * (int16_t)(rotary_encoder->speed_rpm > speed_threshold);
 			else
 				c->triggers._bits[tr_out] += UINT8_MAX;
 		}
 	}
 	else{
-		float val = rotary_encoder->position_linear - *linear_middle;
-		c->triggers._bits[tr_out] += (val > *linear_deadzone || val < -*linear_deadzone) ? ((invert) ? (1 - val) * UINT8_MAX : val * UINT8_MAX) : 0;
+		float val = rotary_encoder->position_linear - linear_middle;
+		c->triggers._bits[tr_out] += (val > linear_deadzone || val < -linear_deadzone) ? ((invert) ? (1 - val) * UINT8_MAX : val * UINT8_MAX) : 0;
 	}
 }

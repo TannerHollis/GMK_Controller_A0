@@ -35,7 +35,7 @@ void Serial_Comm_CheckMessages(){
  * 			1. 0x0X = Read GMK Controller ID (Revision)
  * 			2. 0x4X = Read Config Profile X
  * 			3. 0x8X = Write Config Profile X
- * 			4. 0xCX = Read All Configs
+ * 			4. 0xCX = Save Configs to Flash
  */
 void Serial_Comm_ParseMessages(){
 	uint8_t profile = buffer_in[0] & 0x3F;

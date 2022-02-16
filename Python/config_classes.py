@@ -135,6 +135,22 @@ class Controller_Configuration():
         byte_cnt = os.path.getsize(file_path)
         print("Total bytes used in configuration: {} of {}. ({:0.2f}%)".format(byte_cnt, CONFIGURATION_SIZE, 100 * byte_cnt / CONFIGURATION_SIZE))
 
+        #Write text file for array initialization
+        self.print_config_to_txt_file(path)
+
+    def print_config_to_txt_file(self, path):
+        #Check if folder exists
+        file_path_txt = os.path.join(path, self.config_name + ".txt")
+        file_path_cfg = os.path.join(path, self.config_name + ".cfg")
+
+        #Write to file
+        with open(file_path_txt, "w") as f_txt:
+            f_txt.write("{ ")
+            with open(file_path_cfg, "rb") as f_cfg:
+                for byte in f_cfg.read():
+                    f_txt.write("{}, ".format(byte))
+            f_txt.write("}")
+
 class Button_as_Button():
     def __init__(self, button_in, button_out):
         self.button_in = button_in
@@ -143,7 +159,7 @@ class Button_as_Button():
         self.struct = b""
 
     def to_bytes(self):
-        self.struct = struct.pack(">BBB", self.type, self.button_in, self.button_out)
+        self.struct = struct.pack("<BBB", self.type, self.button_in, self.button_out)
         return self.struct
 
 class Button_as_Joystick():
@@ -159,7 +175,7 @@ class Button_as_Joystick():
         b1 = 0
         b1 |= self.joystick_lr << 0
         b1 |= self.axis_xy << 1
-        self.struct = struct.pack(">BBB", self.type, self.button_in, b1)
+        self.struct = struct.pack("<BBB", self.type, self.button_in, b1)
         return self.struct
 
 class Button_as_Keyboard():
@@ -170,7 +186,7 @@ class Button_as_Keyboard():
         self.struct = b""
 
     def to_bytes(self):
-        self.struct = struct.pack(">BB{}s".format(len(self.string)), self.type, self.button_in, bytes(self.string, BYTE_ENCODING))
+        self.struct = struct.pack("<BB{}s".format(len(self.string)), self.type, self.button_in, bytes(self.string, BYTE_ENCODING))
         return self.struct
 
 class Button_as_Trigger():
@@ -181,7 +197,7 @@ class Button_as_Trigger():
         self.struct = b""
 
     def to_bytes(self):
-        self.struct = struct.pack(">BBB", self.type, self.button_in, self.trigger_lr)
+        self.struct = struct.pack("<BBB", self.type, self.button_in, self.trigger_lr)
         return self.struct
 
 class Joystick_as_Button():
@@ -201,7 +217,7 @@ class Joystick_as_Button():
         b0 |= self.axis_xy << 1
         b0 |= self.invert << 2
         b0 |= self.pos_neg << 3
-        self.struct = struct.pack(">BBfB", self.type, b0, self.threshold, self.button_out)
+        self.struct = struct.pack("<BBfB", self.type, b0, self.threshold, self.button_out)
         return self.struct
 
 class Joystick_as_Joystick():
@@ -221,7 +237,7 @@ class Joystick_as_Joystick():
         b0 |= self.invert_x << 1
         b0 |= self.invert_y << 2
         b0 |= self.joystick_out << 3
-        self.struct = struct.pack(">BBff", self.type, b0, self.deadzone_x, self.deadzone_y)
+        self.struct = struct.pack("<BBff", self.type, b0, self.deadzone_x, self.deadzone_y)
         return self.struct
 
 class Joystick_as_Keyboard():
@@ -240,7 +256,7 @@ class Joystick_as_Keyboard():
         b0 |= self.axis_xy << 1
         b0 |= self.invert << 2
         b0 |= self.pos_neg << 3
-        self.struct = struct.pack(">BBf{}s".format(len(self.string)), self.type, b0, self.threshold, bytes(self.string, BYTE_ENCODING))
+        self.struct = struct.pack("<BBf{}s".format(len(self.string)), self.type, b0, self.threshold, bytes(self.string, BYTE_ENCODING))
         return self.struct
 
 class Joystick_as_Trigger():
@@ -261,7 +277,7 @@ class Joystick_as_Trigger():
         b0 |= self.invert << 2
         b0 |= self.pos_neg << 3
         b0 |= self.trigger_out << 4
-        self.struct = struct.pack(">BBf".format(len(self.string)), self.type, b0, self.threshold)
+        self.struct = struct.pack("<BBf".format(len(self.string)), self.type, b0, self.threshold)
         return self.struct
 
 class Encoder_as_Button():
@@ -279,7 +295,7 @@ class Encoder_as_Button():
         b0 |= self.speed_based << 0
         b0 |= self.ccw << 1
         b0 |= self.invert << 2
-        self.struct = struct.pack(">BBfB", self.type, b0, self.threshold, self.button_out)
+        self.struct = struct.pack("<BBfB", self.type, b0, self.threshold, self.button_out)
         return self.struct
 
 class Encoder_as_Joystick():
@@ -307,7 +323,7 @@ class Encoder_as_Joystick():
         b13 |= joystick_out << 0
         b13 |= axis_xy << 1
         b13 |= pos_neg << 2
-        self.struct = struct.pack(">BBfffB".format(len(self.string)), self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, b13)
+        self.struct = struct.pack("<BBfffB".format(len(self.string)), self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, b13)
         return self.struct
 
 class Encoder_as_Trigger():
@@ -328,7 +344,7 @@ class Encoder_as_Trigger():
         b0 |= self.speed_based << 1
         b0 |= self.ccw << 2
         b0 |= self.invert << 3
-        self.struct = struct.pack(">BBfffB", self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, self.trigger_out)
+        self.struct = struct.pack("<BBfffB", self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, self.trigger_out)
         return self.struct
     
 if __name__ == "__main__":

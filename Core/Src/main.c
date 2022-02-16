@@ -183,6 +183,8 @@ int main(void)
   //Get Controller Config
   Controller_Config_GetConfig(controller_config_profile);
 
+  uint32_t function_time = 0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -207,7 +209,9 @@ int main(void)
 			HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4); //Trigger Joystick ADC read
 			break;
 		case TIM_EVENT_3:
+			function_time = htim2.Instance->CNT;
 			Controller_Config_MapControllerData(&controller); //Map Controller Configuration Data
+			function_time = htim2.Instance->CNT - function_time;
 			break;
 		case TIM_EVENT_4:
 			//_write(0, &controller, sizeof(controller)); //Write to USB
