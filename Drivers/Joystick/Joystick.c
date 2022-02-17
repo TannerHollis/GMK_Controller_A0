@@ -33,6 +33,7 @@ Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer){
 	js.y.alivezone = JOYSTICK_ALIVEZONE;
 	js.y.val = 0;
 
+	js.calibrate.iters_max = 0;
 	js.calibrate.iters = 0;
 	js.calibrate.flag = 0;
 	js.calibrate.weight = 1.0f;
@@ -41,6 +42,7 @@ Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer){
 }
 
 void Joystick_Calibrate(Joystick_HandleTypeDef *js, uint16_t iters, float weight){
+	js->calibrate.iters_max = iters;
 	js->calibrate.iters = iters;
 	js->calibrate.flag = 1;
 	js->calibrate.weight = weight;

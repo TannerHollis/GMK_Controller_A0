@@ -33,6 +33,7 @@ typedef struct{
 		float val;
 	} y;
 	struct{
+		uint16_t iters_max;
 		uint16_t iters;
 		uint8_t flag;
 		float weight;

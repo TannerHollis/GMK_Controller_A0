@@ -13,5 +13,7 @@ extern int _write(int32_t file, uint8_t *ptr, int32_t len);
 
 void Serial_Comm_CheckMessages();
 void Serial_Comm_ParseMessages();
+void Flash_Erase();
+void Flash_Program_Bytes(uint8_t *pdest, uint8_t *p_source, uint32_t length);
 
 #endif /* SERIAL_COMM_SERIAL_COMM_H_ */

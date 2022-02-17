@@ -239,9 +239,23 @@ int main(void)
 		case ADC_EVENT_UPDATE:
 			Joystick_Update(&(joysticks[0]));
 			Joystick_Update(&(joysticks[1]));
+			if(joysticks[0].calibrate.flag){
+				LED_Controller_ProgressBarUpdate(&led_controller, (1 - ((float)joysticks[0].calibrate.iters / (float)joysticks[0].calibrate.iters_max)));
+			}
+			else if(joysticks[0].calibrate.iters == 1)
+				LED_Controller_ProgressBarDisable(&led_controller);
 			break;
 		case GPIO_EVENT_ENCODER_UPDATE:
 			RotaryEncoder_Update(&rotary_encoder);
+			break;
+		case USB_EVENT_CHANGE_PROFILE:
+			Controller_Config_GetConfig(&controller_config, controller_config_profile);
+			break;
+		case CALIBRATE_JOYSTICKS_EVENT:
+			LED_Controller_ProgressBarEnable(&led_controller);
+			LED_Controller_ProgressBarUpdate(&led_controller, 0.0f);
+			Joystick_Calibrate(&(joysticks[0]), 1000, 0.05f);
+			Joystick_Calibrate(&(joysticks[1]), 1000, 0.05f);
 			break;
 		case USB_EVENT_HID_KEYBOARD_UPDATE:
 			if(keyboard_event_index_write != keyboard_event_index_read){
@@ -582,7 +596,7 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 139;
+  htim3.Init.Prescaler = 2343;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 255;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -607,7 +621,7 @@ static void MX_TIM3_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 128;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
   sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
