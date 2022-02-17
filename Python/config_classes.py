@@ -71,22 +71,13 @@ CONFIGURATION_SIZE = 2048
 CONFIG_NAME_LENGTH = 64
 BYTE_ENCODING = "utf-8"
 
-#Define LED colors
-LED_COLOR_NONE = 0
-LED_COLOR_RED = 1
-LED_COLOR_GREEN = 2
-LED_COLOR_YELLOW = 3
-LED_COLOR_BLUE = 4
-LED_COLOR_PURPLE = 5
-LED_COLOR_CYAN = 6
-LED_COLOR_WHITE = 7
-
 class Controller_Configuration():
-    def __init__(self, profile_number, config_name, led_colors):
+    def __init__(self, profile_number, config_name, led_colors, led_brightness):
         self.profile_number = profile_number
         self.config_name = config_name
         self.led_colors = led_colors
         self.led_colors_bytes = self.set_led_colors(led_colors)
+        self.led_brightness = led_brightness
         self.configurations = []
 
     def add_config(self, configuration):
@@ -99,27 +90,19 @@ class Controller_Configuration():
         return len(self.configurations)
 
     def set_led_colors(self, led_colors):
-        self.led_colors = led_colors
-        b0 = 0x00
-        b0 |= self.led_colors[0] << 5
-        b0 |= self.led_colors[1] << 2
-        b0 |= self.led_colors[2] >> 1
-        b1 = 0x00
-        b1 |= self.led_colors[2] << 7
-        b1 |= self.led_colors[3] << 1
-        self.led_colors_bytes = bytes([b0, b1])
+        self.led_colors_bytes = b""
+        for i in self.led_colors:
+            self.led_colors_bytes += bytes(i)
         return self.led_colors_bytes
 
     def get_led_colors_bytes(self):
-        return bytes(self.led_colors_bytes)
+        return self.led_colors_bytes
 
     def led_bytes_to_colors(bytes_in):
-        led_colors = [0, 0, 0, 0]
-        led_colors[0] |= (bytes_in[0] >> 5) & 7
-        led_colors[1] |= (bytes_in[0] >> 2) & 7
-        led_colors[2] |= (bytes_in[0] << 1) & 7
-        led_colors[2] |= (bytes_in[1] >> 7) & 7
-        led_colors[3] |= (bytes_in[1] >> 1) & 7
+        led_colors = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        for i in range(4):
+            for j in range(3):
+                led_colors[i, j] = bytes_in[i + j]
         return led_colors
 
     def print_config_to_file(self, path):
@@ -134,6 +117,7 @@ class Controller_Configuration():
             print("Writing to file: {}.cfg".format(file_path))
             f.write(bytes([self.profile_number]))
             f.write(self.get_led_colors_bytes())
+            f.write(bytes([self.led_brightness]))
             f.write(self.config_name[:CONFIG_NAME_LENGTH].ljust(CONFIG_NAME_LENGTH, chr(0)).encode(BYTE_ENCODING))
             for config in self.configurations:
                 config_bytes = config.to_bytes()
@@ -167,8 +151,8 @@ class Controller_Configuration():
         cc = Controller_Configuration(profile_number, config_name, led_colors)
         config_start = True
         config_start_add = 0
-        for i range(4 + CONFIG_NAME_LENGTH, len(bytes_in)):
-            if(config_start)
+        for i in range(4 + CONFIG_NAME_LENGTH, len(bytes_in)):
+            if(config_start):
                 t = bytes_in[i]
                 config_start = False
                 config_start_add = i
@@ -480,7 +464,7 @@ class Encoder_as_Trigger():
     
 if __name__ == "__main__":
     print("Creating Default Joystick Configurations")
-    config0 = Controller_Configuration(0, "GMK Controller - Default Configuration 1", [LED_COLOR_CYAN, LED_COLOR_NONE, LED_COLOR_NONE, LED_COLOR_NONE])
+    config0 = Controller_Configuration(0, "GMK Controller - Default Configuration 1", [[255, 0, 0], [0, 255, 0], [0, 0, 255], [50, 0, 50]], 32)
     config0.add_config(Button_as_Button(BUTTON_IN_0, BUTTON_A))
     config0.add_config(Button_as_Button(BUTTON_IN_1, BUTTON_B))
     config0.add_config(Button_as_Button(BUTTON_IN_2, BUTTON_X))

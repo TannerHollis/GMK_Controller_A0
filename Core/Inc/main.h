@@ -47,7 +47,8 @@ typedef enum {
 	ADC_EVENT_UPDATE,
 	GPIO_EVENT_ENCODER_UPDATE,
 	USB_EVENT_HID_KEYBOARD_UPDATE,
-	USB_EVENT_HID_GAMEPAD_UPDATE
+	USB_EVENT_HID_GAMEPAD_UPDATE,
+	SPI_EVENT_LED_UPDATE
 } State_TypeDef;
 
 /* USER CODE END ET */
@@ -65,6 +66,8 @@ static const char gmk_controller_id[] = "GMK Controller (Rev. A0)";
 #define GET_BIT(byte, n) ( (byte & (0x01 << n)) >> n)
 
 /* USER CODE END EM */
+
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);

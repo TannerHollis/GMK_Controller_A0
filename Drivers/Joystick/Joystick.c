@@ -12,7 +12,7 @@
  *      Author: THollis
  */
 
-#include "Joystick.h"
+#include <joystick.h>
 
 Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer){
 	Joystick_HandleTypeDef js;

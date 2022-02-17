@@ -41,9 +41,16 @@ def test_write():
         config = bytes([0x80])
         with open(CONFIG_FILE_NAME, "rb") as f:
             config += f.read(CONFIGURATION_SIZE)
-            config += (CONFIGURATION_SIZE - len(config))*b"0"
+            config += (CONFIGURATION_SIZE + 1 - len(config))*bytes([0])
         s.write(config)
-        print("Wrote {} to Controller.".format(CONFIG_FILE_NAME))
+        print("Writing {} to Controller.".format(CONFIG_FILE_NAME))
+        config_output = s.read(CONFIGURATION_SIZE)
+        if(config_output == config[1:]):
+            print("Successfully wrote profile to device.")
+        else:
+            print("Unsuccessful write.")
+            print(len(config_output), len(config))
+            
     
 def validate_port():
     com_port.text = com_port.text[0:com_port.entry_length]

@@ -15,7 +15,9 @@
  *      Author: THollis
  */
 
-#include "RotaryEncoder.h"
+#include "main.h"
+#include <rotary_encoder.h>
+
 
 /**
   * @brief  Initialize the RotaryEncoder object.

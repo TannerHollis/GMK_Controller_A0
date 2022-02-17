@@ -27,11 +27,12 @@
 #include "stm32f4xx_hal.h"
 #include "usb_device.h"
 
-#include "Serial_Comm.h"
-#include "Controller_Config.h"
-#include "Joystick.h"
-#include "ButtonSwitch.h"
-#include "RotaryEncoder.h"
+#include "buttonswitch.h"
+#include "led_controller.h"
+#include "controller_config.h"
+#include "rotary_encoder.h"
+#include "joystick.h"
+#include "serial_comm.h"
 
 /* USER CODE END Includes */
 
@@ -58,6 +59,7 @@ SPI_HandleTypeDef hspi1;
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 
@@ -88,6 +90,12 @@ ButtonSwitch_HandleTypeDef buttons[14];
 //Declare controller configuration profile, default to 0 on reset
 uint8_t controller_config_profile = 0;
 
+//Declare led controller
+LED_Controller_HandleTypeDef led_controller;
+
+//Declare controller configuration
+Controller_Config_HandleTypeDef controller_config;
+
 //Declare controller data
 Controller_HandleTypeDef controller;
 
@@ -102,6 +110,7 @@ static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -145,15 +154,19 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   //Initialize USB
   HAL_USBD_Setup();
   UsbDevice_Init();
 
-  //Start Timer 2
+  //Start Timers 2 & 4
   HAL_TIM_Base_Start(&htim2);
-  HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_Base_Start(&htim4);
+
+  //Start PWM Timer 3 channel 3
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 
   //Start OC Timer 1 channels 1 through 4
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
@@ -184,8 +197,11 @@ int main(void)
   buttons[12] = ButtonSwitch_Init(&htim2, SW_LT_GPIO_Port, SW_LT_Pin, GPIO_PIN_RESET);
   buttons[13] = ButtonSwitch_Init(&htim2, SW_RT_GPIO_Port, SW_RT_Pin, GPIO_PIN_RESET);
 
-  //Get Controller Config
-  Controller_Config_GetConfig(controller_config_profile);
+  //Initialize Led Controller
+  led_controller = LED_Controller_Init(&htim3, &hspi1, R_CLK_GPIO_Port, R_CLK_Pin, &(htim3.Instance->CCR3));
+
+  //Initialize controller configuration with first profile
+  controller_config = Controller_Config_Init(controller_config_profile, &led_controller);
 
   uint16_t function_time = 0;
 
@@ -203,6 +219,9 @@ int main(void)
 	switch(event_state[event_index_read]){
 		case EVENT_WAIT:
 			UpdateAllButtons(); //Read Button States
+			function_time = htim4.Instance->CNT;
+			LED_Controller_Update(&led_controller); //Update LED Color
+			function_time = htim4.Instance->CNT - function_time;
 			break;
 		case TIM_EVENT_1:
 			HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4); //Trigger Joystick ADC read
@@ -211,7 +230,7 @@ int main(void)
 			Serial_Comm_CheckMessages(); //Read incoming messages
 			break;
 		case TIM_EVENT_3:
-			Controller_Config_MapControllerData(&controller); //Map Controller Configuration Data
+			Controller_Config_MapControllerData(&controller_config, &controller); //Map Controller Configuration Data
 			break;
 		case TIM_EVENT_4:
 			//_write(0, &controller, sizeof(controller)); //Write to USB
@@ -232,6 +251,9 @@ int main(void)
 			break;
 		case USB_EVENT_HID_GAMEPAD_UPDATE:
 			// TODO: Implement a Send Gamepad Event via HID
+			break;
+		case SPI_EVENT_LED_UPDATE:
+			LED_Controller_Latch(&led_controller, GPIO_PIN_SET); //Latch new led output
 			break;
 	}
 	if(event_index_read != event_index_write){
@@ -388,7 +410,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_LSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   hspi1.Init.CRCPolynomial = 10;
@@ -554,14 +576,15 @@ static void MX_TIM3_Init(void)
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM3_Init 1 */
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 0;
+  htim3.Init.Prescaler = 139;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 65535;
+  htim3.Init.Period = 255;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -573,15 +596,73 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 128;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
+  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 0;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 65535;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
 
 }
 
@@ -619,9 +700,6 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(R_CLK_GPIO_Port, R_CLK_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(nOE_GPIO_Port, nOE_Pin, GPIO_PIN_SET);
-
   /*Configure GPIO pins : SW_B_Pin SW_Y_Pin SW_RT_Pin */
   GPIO_InitStruct.Pin = SW_B_Pin|SW_Y_Pin|SW_RT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -640,13 +718,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(R_CLK_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : nOE_Pin */
-  GPIO_InitStruct.Pin = nOE_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(nOE_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SW_BACK_Pin SW_START_Pin SW_LTH_Pin SW_RB_Pin
                            SW_RIGHT_Pin SW_X_Pin SW_A_Pin */
@@ -723,6 +794,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == ENCODER_A_Pin || GPIO_Pin == ENCODER_B_Pin){
 		write_next_event_state(GPIO_EVENT_ENCODER_UPDATE);
 	}
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
+	write_next_event_state(SPI_EVENT_LED_UPDATE);
 }
 
 /* USER CODE END 4 */

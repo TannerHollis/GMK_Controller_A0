@@ -10,15 +10,14 @@
  */
 
 #include "main.h"
-#include "stdint.h"
-#include "Controller_Config.h"
-#include "Joystick.h"
-#include "ButtonSwitch.h"
-#include "RotaryEncoder.h"
+#include <led_controller.h>
+#include <buttonswitch.h>
+#include <joystick.h>
+#include <rotary_encoder.h>
+#include <controller_config.h>
 
-__attribute__((__section__(".user_data"))) const uint8_t controller_configs[CONTROLLER_CONFIG_PROFILES][CONTROLLER_CONFIG_LENGTH] = { 0, 192, 0, 71, 77, 75, 32, 67, 111, 110, 116, 114, 111, 108, 108, 101, 114, 32, 45, 32, 68, 101, 102, 97, 117, 108, 116, 32, 67, 111, 110, 102, 105, 103, 117, 114, 97, 116, 105, 111, 110, 32, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 1, 1, 255, 0, 2, 2, 255, 0, 3, 3, 255, 0, 4, 4, 255, 0, 5, 5, 255, 0, 6, 7, 255, 0, 7, 7, 255, 0, 8, 10, 255, 0, 9, 11, 255, 0, 10, 12, 255, 0, 11, 13, 255, 3, 12, 0, 255, 3, 13, 1, 255, 5, 0, 205, 204, 76, 61, 205, 204, 76, 61, 255, 5, 1, 205, 204, 76, 61, 205, 204, 76, 61, 255, 8, 1, 0, 0, 128, 63, 10, 255, 8, 3, 0, 0, 128, 63, 11, 255, };
+__attribute__((__section__(".user_data"))) const uint8_t controller_configs[CONTROLLER_CONFIG_PROFILES][CONTROLLER_CONFIG_LENGTH] = { 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 50, 0, 50, 32, 71, 77, 75, 32, 67, 111, 110, 116, 114, 111, 108, 108, 101, 114, 32, 45, 32, 68, 101, 102, 97, 117, 108, 116, 32, 67, 111, 110, 102, 105, 103, 117, 114, 97, 116, 105, 111, 110, 32, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 1, 1, 255, 0, 2, 2, 255, 0, 3, 3, 255, 0, 4, 4, 255, 0, 5, 5, 255, 0, 6, 7, 255, 0, 7, 7, 255, 0, 8, 10, 255, 0, 9, 11, 255, 0, 10, 12, 255, 0, 11, 13, 255, 3, 12, 0, 255, 3, 13, 1, 255, 5, 0, 205, 204, 76, 61, 205, 204, 76, 61, 255, 5, 1, 205, 204, 76, 61, 205, 204, 76, 61, 255, 8, 1, 0, 0, 128, 63, 10, 255, 8, 3, 0, 0, 128, 63, 11, 255, };
 uint8_t controller_config_address;
-Controller_Config_HandleTypeDef controller_config;
 
 //Import Hardware TypeDefs
 extern ButtonSwitch_HandleTypeDef *buttons;
@@ -91,31 +90,43 @@ void Flash_Read_Data (uint32_t StartSectorAddress, uint32_t *RxBuf, uint16_t num
 	}
 }
 
-void Controller_Config_GetConfig(uint8_t config_profile){
+Controller_Config_HandleTypeDef Controller_Config_Init(uint8_t profile, LED_Controller_HandleTypeDef *led_controller){
+	Controller_Config_HandleTypeDef cc;
+	cc.led_controller = led_controller;
+	cc.profile = profile;
+	Controller_Config_GetConfig(&cc, cc.profile);
+	return(cc);
+}
+
+void Controller_Config_GetConfig(Controller_Config_HandleTypeDef *cc, uint8_t config_profile){
 	controller_config_address = config_profile * CONTROLLER_CONFIG_LENGTH;
 
 	//Store configuration buffer address, profile number and name into config
-	controller_config.config_buffer = (uint8_t *)(&(controller_configs[config_profile][0]));
-	controller_config.profile = (uint8_t)(controller_configs[config_profile][0]);
-	controller_config.led_color[0] = (uint8_t)(controller_configs[config_profile][1]);
-	controller_config.led_color[1] = (uint8_t)(controller_configs[config_profile][2]);
-	controller_config.name = (char *)(&(controller_configs[config_profile][3]));
+	cc->config_buffer = (uint8_t *)(&(controller_configs[config_profile][0]));
+	cc->profile = (uint8_t)(controller_configs[config_profile][0]);
+	for(uint8_t i = 0; i < LEDS; i++){
+		cc->led_controller->leds[i].r = controller_configs[config_profile][i*3 + 1];
+		cc->led_controller->leds[i].g = controller_configs[config_profile][i*3 + 2];
+		cc->led_controller->leds[i].b = controller_configs[config_profile][i*3 + 3];
+	}
+	cc->led_controller->brightness = controller_configs[config_profile][LEDS*3 + 1];
+	cc->name = (char *)(&(controller_configs[config_profile][LEDS*3 + 2]));
 
 	//Declare input configuration counter
 	uint8_t input_config_index = 0;
 	uint8_t config_start_found = 1;
 
-	for(uint16_t i = CONTROLLER_CONFIG_NAME_LENGTH + 3; i < CONTROLLER_CONFIG_LENGTH; i++){
+	for(uint16_t i = CONTROLLER_CONFIG_NAME_LENGTH + LEDS*3 + 2; i < CONTROLLER_CONFIG_LENGTH; i++){
 		//If the input config start detected,
 		if(config_start_found){
-			controller_config.input_configs[input_config_index].input_type = controller_config.config_buffer[i];
-			controller_config.input_configs[input_config_index].addr_start = i + 1;
+			cc->input_configs[input_config_index].input_type = cc->config_buffer[i];
+			cc->input_configs[input_config_index].addr_start = i + 1;
 			config_start_found = 0;
 		}
 
 		//If end byte (0xFF) detected, increment the input config counter
-		if(controller_config.config_buffer[i] == 0xFF){
-			controller_config.input_configs[input_config_index].addr_end = i;
+		if(cc->config_buffer[i] == 0xFF){
+			cc->input_configs[input_config_index].addr_end = i;
 			input_config_index++;
 			config_start_found = 1;
 		}
@@ -123,7 +134,7 @@ void Controller_Config_GetConfig(uint8_t config_profile){
 
 	//Fill the remaining input configurations not used
 	for(uint8_t i = input_config_index; i < CONTROLLER_CONFIG_INPUTS; i++){
-		controller_config.input_configs[i].input_type = INPUT_NOT_CONFIGURED;
+		cc->input_configs[i].input_type = INPUT_NOT_CONFIGURED;
 	}
 }
 
@@ -150,53 +161,53 @@ void Controller_Config_ClearControllerData(Controller_HandleTypeDef *c){
  * 			essentially determined by the processing time of this function.
  *
  */
-void Controller_Config_MapControllerData(Controller_HandleTypeDef *c){
+void Controller_Config_MapControllerData(Controller_Config_HandleTypeDef *cc, Controller_HandleTypeDef *c){
 	//Clear Controller Data
 	Controller_Config_ClearControllerData(c);
 
 	//Iterate through input configurations to compute output
 	for(uint8_t i = 0; i < CONTROLLER_CONFIG_INPUTS; i++){
-		Controller_Config_MapInputConfig(c, &(controller_config.input_configs[i]));
+		Controller_Config_MapInputConfig(cc, c, &(cc->input_configs[i]));
 	}
 }
 
-void Controller_Config_MapInputConfig(Controller_HandleTypeDef *c, Input_Config_HandleTypeDef *ic){
+void Controller_Config_MapInputConfig(Controller_Config_HandleTypeDef *cc, Controller_HandleTypeDef *c, Input_Config_HandleTypeDef *ic){
 	switch(ic->input_type){
 		case INPUT_BUTTON_AS_BUTTON:
-			Controller_Config_MapInputButtonAsButton(c, &(controller_config.config_buffer[ic->addr_start]));
+			Controller_Config_MapInputButtonAsButton(c, &(cc->config_buffer[ic->addr_start]));
 			break;
 		case INPUT_BUTTON_AS_JOYSTICK:
-			Controller_Config_MapInputButtonAsJoystick(c, &(controller_config.config_buffer[ic->addr_start]));
+			Controller_Config_MapInputButtonAsJoystick(c, &(cc->config_buffer[ic->addr_start]));
 			break;
 		case INPUT_BUTTON_AS_KEYBOARD:
-			Controller_Config_MapInputButtonAsKeyboard(c, &(controller_config.config_buffer[ic->addr_start]), ic->addr_end - ic->addr_start);
+			Controller_Config_MapInputButtonAsKeyboard(c, &(cc->config_buffer[ic->addr_start]), ic->addr_end - ic->addr_start);
 			break;
 		case INPUT_BUTTON_AS_TRIGGER:
-			Controller_Config_MapInputButtonAsTrigger(c, &(controller_config.config_buffer[ic->addr_start]));
+			Controller_Config_MapInputButtonAsTrigger(c, &(cc->config_buffer[ic->addr_start]));
 			break;
 		case INPUT_JOYSTICK_AS_BUTTON:
-			Controller_Config_MapInputJoystickAsButton(c, &(controller_config.config_buffer[ic->addr_start]));
+			Controller_Config_MapInputJoystickAsButton(c, &(cc->config_buffer[ic->addr_start]));
 			break;
 		case INPUT_JOYSTICK_AS_JOYSTICK:
-			Controller_Config_MapInputJoystickAsJoystick(c, &(controller_config.config_buffer[ic->addr_start]));
+			Controller_Config_MapInputJoystickAsJoystick(c, &(cc->config_buffer[ic->addr_start]));
 			break;
 		case INPUT_JOYSTICK_AS_KEYBOARD:
-			Controller_Config_MapInputJoystickAsKeyboard(c, &(controller_config.config_buffer[ic->addr_start]), ic->addr_end - ic->addr_start);
+			Controller_Config_MapInputJoystickAsKeyboard(c, &(cc->config_buffer[ic->addr_start]), ic->addr_end - ic->addr_start);
 			break;
 		case INPUT_JOYSTICK_AS_TRIGGER:
-			Controller_Config_MapInputJoystickAsJoystick(c, &(controller_config.config_buffer[ic->addr_start]));
+			Controller_Config_MapInputJoystickAsJoystick(c, &(cc->config_buffer[ic->addr_start]));
 			break;
 		case INPUT_ENCODER_AS_BUTTON:
-			Controller_Config_MapInputEncoderAsButton(c, &(controller_config.config_buffer[ic->addr_start]));
+			Controller_Config_MapInputEncoderAsButton(c, &(cc->config_buffer[ic->addr_start]));
 			break;
 		case INPUT_ENCODER_AS_JOYSTICK:
-			Controller_Config_MapInputEncoderAsJoystick(c, &(controller_config.config_buffer[ic->addr_start]));
+			Controller_Config_MapInputEncoderAsJoystick(c, &(cc->config_buffer[ic->addr_start]));
 			break;
 		case INPUT_ENCODER_AS_KEYBOARD:
-			Controller_Config_MapInputEncoderAsKeyboard(c, &(controller_config.config_buffer[ic->addr_start]), ic->addr_end - ic->addr_start);
+			Controller_Config_MapInputEncoderAsKeyboard(c, &(cc->config_buffer[ic->addr_start]), ic->addr_end - ic->addr_start);
 			break;
 		case INPUT_ENCODER_AS_TRIGGER:
-			Controller_Config_MapInputEncoderAsTrigger(c, &(controller_config.config_buffer[ic->addr_start]));
+			Controller_Config_MapInputEncoderAsTrigger(c, &(cc->config_buffer[ic->addr_start]));
 			break;
 		default:
 			break;

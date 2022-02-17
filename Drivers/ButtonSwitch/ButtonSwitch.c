@@ -10,7 +10,7 @@
  *      Author: THollis
  */
 
-#include "ButtonSwitch.h"
+#include <buttonswitch.h>
 
 /**
   * @brief  Initialize the ButtonSwitch object.

@@ -8,6 +8,8 @@
 #ifndef CONTROLLER_CONFIG_CONTROLLER_CONFIG_H_
 #define CONTROLLER_CONFIG_CONTROLLER_CONFIG_H_
 
+#include <led_controller.h>
+
 #define CONTROLLER_CONFIG_LENGTH 2048
 #define CONTROLLER_CONFIG_PROFILES 28
 
@@ -40,8 +42,8 @@ typedef struct {
 	uint8_t profile;
 	char *name;
 	uint8_t *config_buffer;
-	uint8_t led_color[2];
 	Input_Config_HandleTypeDef input_configs[CONTROLLER_CONFIG_INPUTS];
+	LED_Controller_HandleTypeDef *led_controller;
 } Controller_Config_HandleTypeDef;
 
 typedef struct {
@@ -89,10 +91,11 @@ typedef struct {
 
 uint32_t Flash_Write_Data (uint32_t StartPageAddress, uint32_t *Data, uint16_t numberofwords);
 void Flash_Read_Data (uint32_t StartPageAddress, uint32_t *RxBuf, uint16_t numberofwords);
-void Controller_Config_GetConfig(uint8_t config_profile);
+Controller_Config_HandleTypeDef Controller_Config_Init(uint8_t profile, LED_Controller_HandleTypeDef *led_controller);
+void Controller_Config_GetConfig(Controller_Config_HandleTypeDef *cc, uint8_t config_profile);
 void Controller_Config_ClearControllerData(Controller_HandleTypeDef *c);
-void Controller_Config_MapControllerData(Controller_HandleTypeDef *c);
-void Controller_Config_MapInputConfig(Controller_HandleTypeDef *c, Input_Config_HandleTypeDef *ic);
+void Controller_Config_MapControllerData(Controller_Config_HandleTypeDef *cc, Controller_HandleTypeDef *c);
+void Controller_Config_MapInputConfig(Controller_Config_HandleTypeDef *cc, Controller_HandleTypeDef *c, Input_Config_HandleTypeDef *ic);
 void Controller_Config_MapInputButtonAsButton(Controller_HandleTypeDef *c, uint8_t *ic_buffer);
 void Controller_Config_MapInputButtonAsJoystick(Controller_HandleTypeDef *c, uint8_t *ic_buffer);
 void Controller_Config_MapInputButtonAsKeyboard(Controller_HandleTypeDef *c, uint8_t *ic_buffer, uint8_t str_length);

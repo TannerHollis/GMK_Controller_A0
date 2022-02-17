@@ -5,10 +5,8 @@
  *      Author: THollis
  */
 
-#ifndef ROTARYENCODER_ROTARYENCODER_H_
-#define ROTARYENCODER_ROTARYENCODER_H_
-
-#include "main.h"
+#ifndef ROTARYENCODER_ROTARY_ENCODER_H_
+#define ROTARYENCODER_ROTARY_ENCODER_H_
 
 #define ROTARYENCODER_UPDATE_TIM_FREQ 1000.0f
 #define ROTARYENCODER_PPR 24.0f
@@ -57,4 +55,4 @@ void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re);
 RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTypeDef state, RotaryEncoder_StateTypeDef last_state);
 void RotaryEncoder_ClearPeakSpeed(RotaryEncoder_HandleTypeDef *re);
 
-#endif /* ROTARYENCODER_ROTARYENCODER_H_ */
+#endif /* ROTARYENCODER_ROTARY_ENCODER_H_ */

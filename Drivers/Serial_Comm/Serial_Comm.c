@@ -6,8 +6,8 @@
  */
 
 #include "main.h"
-#include "Serial_Comm.h"
-#include "Controller_Config.h"
+#include <controller_config.h>
+#include <serial_comm.h>
 #include "string.h"
 
 uint8_t buffer_in[CONTROLLER_CONFIG_LENGTH + 1];
@@ -48,6 +48,7 @@ void Serial_Comm_ParseMessages(){
 	}
 	else if(instr == 2){
 		memcpy(&(controller_configs[profile][0]), &buffer_in[1], CONTROLLER_CONFIG_LENGTH);
+		_write(0, &(controller_configs[profile][0]), CONTROLLER_CONFIG_LENGTH);
 	}
 	else if(instr == 3){
 		//memcpy((uint8_t *)(controller_configs[profile][0]), (uint8_t *)(buffer_in[1]), CONTROLLER_CONFIG_LENGTH);
