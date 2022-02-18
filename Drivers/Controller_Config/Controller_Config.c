@@ -76,7 +76,7 @@ void Controller_Config_GetConfig(Controller_Config_HandleTypeDef *cc, uint8_t co
 void Controller_Config_ClearControllerData(Controller_HandleTypeDef *c){
 	//Reset all bytes inside of the Controller Data to zero before update
 	uint8_t *controller = (uint8_t *)c;
-	for(uint8_t i = 0; i < sizeof(c); i++){
+	for(uint8_t i = 0; i < sizeof(*c); i++){
 		*controller = 0x00;
 		controller++;
 	}
