@@ -50,7 +50,7 @@ BUTTON_RIGHT = 11
 BUTTON_START = 12
 BUTTON_BACK = 13
 JOYSTICK_LEFT = 0
-JOYSTICK_RIGHT = 0
+JOYSTICK_RIGHT = 1
 AXIS_X = 0
 AXIS_Y = 1
 AXIS_POSITIVE = 0
@@ -70,6 +70,89 @@ ENCODER_DIR_COUNTERCLOCKWISE = 1
 CONFIGURATION_SIZE = 2048
 CONFIG_NAME_LENGTH = 64
 BYTE_ENCODING = "utf-8"
+
+class Controller_Output():
+    def __init__(self, a, b, x, y, lb, rb, lth, rth, up, down, left, right, start, back, joystick_lx, joystick_ly, joystick_rx, joystick_ry, trigger_l, trigger_r):
+        self.a = a
+        self.b = b
+        self.x = x
+        self.y = y
+        self.lb = lb
+        self.rb = rb
+        self.lth = lth
+        self.rth = rth
+        self.up = up
+        self.down = down
+        self.left = left
+        self.right = right
+        self.start = start
+        self.back = back
+        self.joystick_lx = joystick_lx
+        self.joystick_ly = joystick_ly
+        self.joystick_rx = joystick_rx
+        self.joystick_ry = joystick_ry
+        self.trigger_l = trigger_l
+        self.trigger_r = trigger_r
+
+    def to_bytes(self):
+        b0 = 0
+        b0 |= self.a << 7
+        b0 |= self.b << 6
+        b0 |= self.x << 5
+        b0 |= self.y << 4
+        b0 |= self.lb << 3
+        b0 |= self.rb << 2
+        b0 |= self.lth << 1
+        b0 |= self.rth << 0
+        b1 = 0
+        b1 |= self.up << 7
+        b1 |= self.down << 6
+        b1 |= self.left << 5
+        b1 |= self.right << 4
+        b1 |= self.start << 3
+        b1 |= self.back << 2
+        return struct.pack("<BBhhhhBB", b0, b1, self.joystick_lx, self.joystick_ly, self.joystick_rx, self.joystick_ry, self.trigger_l, self.trigger_r)
+
+    def from_bytes(bytes_in):
+        (b0, b1,  joystick_lx, joystick_ly, joystick_rx, joystick_ry, trigger_l, trigger_r) = struct.unpack("<BBhhhhBB", bytes_in)
+        a = (b0 >> 7) & 1
+        b = (b0 >> 6) & 1
+        x = (b0 >> 5) & 1
+        y = (b0 >> 4) & 1
+        lb = (b0 >> 3) & 1
+        rb = (b0 >> 2) & 1
+        lth = (b0 >> 1) & 1
+        rth = (b0 >> 0) & 1
+        up = (b1 >> 7) & 1
+        down = (b1 >> 6) & 1
+        left = (b1 >> 5) & 1
+        right = (b1 >> 4) & 1
+        start = (b1 >> 3) & 1
+        back = (b1 >> 2) & 1
+        return Controller_Output(a, b, x, y, lb, rb, lth, rth, up, down, left, right, start, back, joystick_lx, joystick_ly, joystick_rx, joystick_ry, trigger_l, trigger_r)
+
+    def __str__(self):
+        string = ""
+        string += "a: {}\n".format(self.a)
+        string += "b: {}\n".format(self.b)
+        string += "x: {}\n".format(self.x)
+        string += "y: {}\n".format(self.y)
+        string += "lb: {}\n".format(self.lb)
+        string += "rb: {}\n".format(self.rb)
+        string += "lth: {}\n".format(self.lth)
+        string += "rth: {}\n".format(self.rth)
+        string += "up: {}\n".format(self.up)
+        string += "down: {}\n".format(self.down)
+        string += "left: {}\n".format(self.left)
+        string += "right: {}\n".format(self.right)
+        string += "start: {}\n".format(self.start)
+        string += "joystick_lx: {}\n".format(self.joystick_lx)
+        string += "joystick_ly: {}\n".format(self.joystick_ly)
+        string += "joystick_rx: {}\n".format(self.joystick_rx)
+        string += "joystick_ry: {}\n".format(self.joystick_ry)
+        string += "trigger_l: {}\n".format(self.trigger_l)
+        string += "trigger_r: {}\n".format(self.trigger_r)
+        return string
 
 class Controller_Configuration():
     def __init__(self, profile_number, config_name, led_colors, led_brightness):

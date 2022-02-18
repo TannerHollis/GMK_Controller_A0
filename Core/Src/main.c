@@ -63,6 +63,9 @@ TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 
+//Declare ADC buffer for joysticks
+uint16_t adc_buffer[4];
+
 //Create event buffer (FIFO) to store events to process
 State_TypeDef event_state[EVENT_BUFFER_LENGTH];
 uint8_t event_index_read = 0;
@@ -77,9 +80,6 @@ uint8_t keyboard_event_index_write = 0;
 
 //Declare Joysticks
 Joystick_HandleTypeDef joysticks[2];
-
-//Declare ADC buffer for joysticks
-uint16_t adc_buffer[4];
 
 //Declare RotaryEncoder
 RotaryEncoder_HandleTypeDef rotary_encoder;
@@ -98,18 +98,19 @@ Controller_Config_HandleTypeDef controller_config;
 
 //Declare controller data
 Controller_HandleTypeDef controller;
+uint8_t controller_cdc_output_flag = 0;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_ADC1_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_DMA_Init(void);
+static void MX_ADC1_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -148,12 +149,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC1_Init();
   MX_SPI1_Init();
-  MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_DMA_Init();
+  MX_ADC1_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
@@ -175,8 +176,8 @@ int main(void)
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_4);
 
   //Initialize Joysticks
-  joysticks[0] = Joystick_Init(&(adc_buffer[0]), &(adc_buffer[1]));
-  joysticks[1] = Joystick_Init(&(adc_buffer[2]), &(adc_buffer[3]));
+  joysticks[0] = Joystick_Init(&adc_buffer[0], &adc_buffer[1]);
+  joysticks[1] = Joystick_Init(&adc_buffer[2], &adc_buffer[3]);
 
   //Initialize RotaryEncoder
   rotary_encoder = RotaryEncoder_Init(&htim2, ENCODER_A_GPIO_Port, ENCODER_A_Pin, ENCODER_B_GPIO_Port, ENCODER_B_Pin);
@@ -214,6 +215,7 @@ int main(void)
   for(uint8_t i = 0; i < EVENT_BUFFER_LENGTH; i++){
 	  event_state[i] = EVENT_WAIT;
   }
+
   while (1)
   {
 	switch(event_state[event_index_read]){
@@ -233,13 +235,16 @@ int main(void)
 			Controller_Config_MapControllerData(&controller_config, &controller); //Map Controller Configuration Data
 			break;
 		case TIM_EVENT_4:
-			//_write(0, &controller, sizeof(controller)); //Write to USB
+			if(controller_cdc_output_flag){
+				_write(0, &controller, sizeof(controller)); //Write to USB
+				controller_cdc_output_flag = 0;
+			}
 			RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
 			break;
 		case ADC_EVENT_UPDATE:
 			Joystick_Update(&(joysticks[0]));
 			Joystick_Update(&(joysticks[1]));
-			if(joysticks[0].calibrate.flag){
+			if(joysticks[0].calibrate.flag && joysticks[0].calibrate.iters > 1){
 				LED_Controller_ProgressBarUpdate(&led_controller, (1 - ((float)joysticks[0].calibrate.iters / (float)joysticks[0].calibrate.iters_max)));
 			}
 			else if(joysticks[0].calibrate.iters == 1)
@@ -256,6 +261,9 @@ int main(void)
 			LED_Controller_ProgressBarUpdate(&led_controller, 0.0f);
 			Joystick_Calibrate(&(joysticks[0]), 1000, 0.05f);
 			Joystick_Calibrate(&(joysticks[1]), 1000, 0.05f);
+			break;
+		case USB_EVENT_OUTPUT_CONTROLLER_DATA:
+			controller_cdc_output_flag = 1;
 			break;
 		case USB_EVENT_HID_KEYBOARD_UPDATE:
 			if(keyboard_event_index_write != keyboard_event_index_read){
@@ -365,7 +373,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -691,7 +699,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
@@ -781,7 +789,7 @@ void write_next_keyboard_event_state(uint8_t *string_address, uint8_t string_len
 	event_index_write = (keyboard_event_index_write + 1) % KEYBOARD_EVENT_BUFFER_LENGTH;
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *adc){
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
 	write_next_event_state(ADC_EVENT_UPDATE);
 }
 

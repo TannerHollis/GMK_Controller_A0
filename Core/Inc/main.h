@@ -91,14 +91,6 @@ void write_next_keyboard_event_state(uint8_t *string_address, uint8_t string_len
 #define SW_Y_GPIO_Port GPIOC
 #define SW_RT_Pin GPIO_PIN_15
 #define SW_RT_GPIO_Port GPIOC
-#define JYSTK_L_X_Pin GPIO_PIN_0
-#define JYSTK_L_X_GPIO_Port GPIOA
-#define JYSTK_L_Y_Pin GPIO_PIN_1
-#define JYSTK_L_Y_GPIO_Port GPIOA
-#define JYSTK_R_X_Pin GPIO_PIN_2
-#define JYSTK_R_X_GPIO_Port GPIOA
-#define JYSTK_R_Y_Pin GPIO_PIN_3
-#define JYSTK_R_Y_GPIO_Port GPIOA
 #define SW_RTH_Pin GPIO_PIN_4
 #define SW_RTH_GPIO_Port GPIOA
 #define SR_CLK_Pin GPIO_PIN_5

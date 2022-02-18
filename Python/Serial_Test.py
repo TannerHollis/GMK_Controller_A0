@@ -54,6 +54,11 @@ def test_write():
 def test_calibrate():
     if s.isOpen():
         s.write(bytes([0x60]))
+
+def test_controller_output():
+    if s.isOpen():
+        s.write(bytes([0x70]))
+        print(Controller_Output.from_bytes(s.read(12)))
     
 def validate_port():
     com_port.text = com_port.text[0:com_port.entry_length]
@@ -78,6 +83,9 @@ test_write_config_button.command = test_write
 
 test_calibrate_button = Button(text_controller, "Test Calibrate Joysticks (Send 0x60)", (window_size[0]/2, 140), BLACK, 24, None, align="C", clickable=True)
 test_calibrate_button.command = test_calibrate
+
+test_controller_output_button = Button(text_controller, "Test Controller Output (Send 0x70)", (window_size[0]/2, 170), BLACK, 24, None, align="C", clickable=True)
+test_controller_output_button.command = test_controller_output
 
 open_device_button = Button(text_controller, "Open Device", (window_size[0]/4, 200), BLACK, 24, None, align="C", clickable=True)
 open_device_button.command = open_device

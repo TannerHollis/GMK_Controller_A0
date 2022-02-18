@@ -117,7 +117,7 @@ void ButtonSwitch_Update(ButtonSwitch_HandleTypeDef *bs){
 	}
 
 	//Check if button is held
-	bs->is_held = state != bs->normal_state && is_debounce;
+	bs->is_held = state != bs->normal_state;
 }
 
 /**

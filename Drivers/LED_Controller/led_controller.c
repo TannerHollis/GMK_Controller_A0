@@ -13,7 +13,7 @@
  *			- nOE_channel, the address of the nOE PWM CCR register, for dimming
  *		- Call LED_Controller_Update() when you want to update the led controller color.
  *			- This function should be consistenly called when idle to mimic PWM through shift register output.
- *		- Update function was measured to complete in about 20.3 uSeconds @ 72MHz.
+ *		- Update function was measured to complete in about 22.1 uSeconds @ 72MHz.
  *
  *  Created on: Feb 15, 2022
  *      Author: TannerGaming
