@@ -39,14 +39,15 @@ void Serial_Comm_CheckMessages(){
  * 			5. 	0x4X = Save Config X to Flash
  * 			6. 	0x5X = Auto-Calibrate Joysticks
  * 			7. 	0x6X = Get Controller Data Output
- * 			8. 	0x7X =
+ * 			8. 	0x7X = Ping Device, Output 0xFF
  * 			9. 	0x8X = Select Controller Config Profile X
  * 			10. 0x9X = Enable Keyboard Output
  * 			11. 0xAX = Disable Keyboard Output
  * 			12. 0xBX = Enable Mouse Output
  * 			13. 0xCX = Disable Mouse Output
  * 			14. 0xDX = Enable Gamepad Output
- * 			15. 0xFX = Disable Gamepad Output
+ * 			15. 0xEX = Disable Gamepad Output
+ * 			16. 0xFX = NOP
  */
 void Serial_Comm_ParseMessages(){
 	uint8_t profile = buffer_in[0] & 0x0F;
@@ -63,44 +64,43 @@ void Serial_Comm_ParseMessages(){
 			_write(0, &(controller_config[0]), CONTROLLER_CONFIG_LENGTH);
 			break;
 		case 3:
-			memcpy((uint8_t *)(controller_configs[profile][0]), (uint8_t *)(buffer_in[1]), CONTROLLER_CONFIG_LENGTH);
-			break;
-		case 4:
 			Flash_Erase();
-			break;
-		case 5:
+		case 4:
 			Flash_Program_Bytes(&(controller_configs[profile][0]), (uint8_t *)(buffer_in[1]), CONTROLLER_CONFIG_LENGTH);
 			break;
-		case 6:
+		case 5:
 			write_next_event_state(CALIBRATE_JOYSTICKS_EVENT);
 			break;
-		case 7:
+		case 6:
 			write_next_event_state(USB_EVENT_OUTPUT_CONTROLLER_DATA);
 			break;
-		case 8:
-			//Do nothing...
+		case 7:
+			write_next_event_state(USB_EVENT_PING);
 			break;
-		case 9:
+		case 8:
 			controller_config_profile = profile;
 			write_next_event_state(USB_EVENT_CHANGE_CONFIG);
 			break;
-		case 10:
+		case 9:
 			//TODO: Implement Keyboard output enable
 			break;
-		case 11:
+		case 10:
 			//TODO: Implement Keyboard output disable
 			break;
-		case 12:
+		case 11:
 			//TODO: Implement Mouse output enable
 			break;
-		case 13:
+		case 12:
 			//TODO: Implement Mouse output disable
 			break;
-		case 14:
+		case 13:
 			//TODO: Implement Gamepad output enable
 			break;
-		case 15:
+		case 14:
 			//TODO: Implement Gamepad output disable
+			break;
+		case 15:
+			//Do nothing...
 			break;
 		default:
 			break;

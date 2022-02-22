@@ -229,23 +229,45 @@ class Controller_Configuration():
 
     def from_bytes(bytes_in):
         profile_number = struct.unpack("<B", bytes_in[0])
-        led_colors = Controller_Configuration.led_bytes_to_colors(struct.unpack("<BB", bytes_in[1:3]))
-        config_name = struct.unpack("<{}s".format(CONFIG_NAME_LENGTH), bytes_in[3:4+CONFIG_NAME_LENGTH])
+        led_colors = Controller_Configuration.led_bytes_to_colors(struct.unpack("<{}B".format(12), bytes_in[1:14]))
+        config_name = struct.unpack("<{}s".format(CONFIG_NAME_LENGTH), bytes_in[14:15+CONFIG_NAME_LENGTH])
         cc = Controller_Configuration(profile_number, config_name, led_colors)
         config_start = True
-        config_start_add = 0
-        for i in range(4 + CONFIG_NAME_LENGTH, len(bytes_in)):
+        config_start_address = 0
+        for i in range(15 + CONFIG_NAME_LENGTH, len(bytes_in)):
             if(config_start):
                 t = bytes_in[i]
                 config_start = False
-                config_start_add = i
+                config_start_address = i
             if bytes_in[i] == 255:
                 config_start = True
-                cc.add_config(Controller_Configuration.parse_config_from_bytes(t, bytes_in[config_start_add : i]))
+                cc.add_config(Controller_Configuration.config_from_bytes(t, bytes_in[config_start_address : i]))
 
-    def parse_config_from_bytes(t, bytes_in):
+    def config_from_bytes(t, bytes_in):
         if t == INPUT_BUTTON_AS_BUTTON:
             return Button_as_Button.from_bytes(bytes_in)
+        if t == INPUT_BUTTON_AS_JOYSTICK:
+            return Button_as_Joystick.from_bytes(bytes_in)
+        if t == INPUT_BUTTON_KEYBOARD:
+            return Button_as_Keyboard.from_bytes(bytes_in, len(bytes_in) - 2)
+        if t == INPUT_BUTTON_AS_TRIGGER:
+            return Button_as_Trigger.from_bytes(bytes_in)
+        if t == INPUT_JOYSTICK_AS_BUTTON:
+            return Joystick_as_Button.from_bytes(bytes_in)
+        if t == INPUT_JOYSTICK_AS_JOYSTICK:
+            return Joystick_as_Joystick.from_bytes(bytes_in)
+        if t == INPUT_JOYSTICK_AS_KEYBOARD:
+            return Joystick_as_Keyboard.from_bytes(bytes_in, len(bytes_in) - 6)
+        if t == INPUT_JOYSTICK_AS_TRIGGER:
+            return Joystick_as_Trigger.from_bytes(bytes_in)
+        if t == INPUT_ENCODER_AS_BUTTON:
+            return Encoder_as_Button.from_bytes(bytes_in)
+        if t == INPUT_ENCODER_AS_JOYSTICK:
+            return Encoder_as_Joystick.from_bytes(bytes_in)
+        if t == INPUT_ENCODER_AS_KEYBOARD:
+            return Encoder_as_Keyboard.from_bytes(bytes, len(bytes_in) - 6)
+        if t == INPUT_ENCODER_AS_TRIGGER:
+            return Encoder_as_Trigger.from_bytes(bytes_in)
 
 class Button_as_Button():
     def __init__(self, button_in, button_out):

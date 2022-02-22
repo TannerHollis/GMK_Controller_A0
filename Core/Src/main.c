@@ -262,6 +262,9 @@ int main(void)
 			Joystick_Calibrate(&(joysticks[0]), 1000, 0.05f);
 			Joystick_Calibrate(&(joysticks[1]), 1000, 0.05f);
 			break;
+		case USB_EVENT_PING:
+			_write(0, &controller_config_profile, sizeof(controller_config_profile));
+			break;
 		case USB_EVENT_OUTPUT_CONTROLLER_DATA:
 			controller_cdc_output_flag = 1;
 			break;

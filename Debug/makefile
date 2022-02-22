@@ -72,8 +72,8 @@ all: main-build
 main-build: GMK_Controller_A0.elf secondary-outputs
 
 # Tool invocations
-GMK_Controller_A0.elf: $(OBJS) $(USER_OBJS) C:\Users\TannerGaming\STM32CubeIDE\workspace_1.3.0\GMK_Controller_A0\STM32F411CCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "GMK_Controller_A0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\TannerGaming\STM32CubeIDE\workspace_1.3.0\GMK_Controller_A0\STM32F411CCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GMK_Controller_A0.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+GMK_Controller_A0.elf: $(OBJS) $(USER_OBJS) C:\Users\thollis\Google\ Drive\Water_Valve_Sensor\GMK_Controller_A0\STM32F411CCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "GMK_Controller_A0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\thollis\Google Drive\Water_Valve_Sensor\GMK_Controller_A0\STM32F411CCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GMK_Controller_A0.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
