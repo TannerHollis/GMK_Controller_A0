@@ -785,7 +785,7 @@ class InputMappingEncoderAsJoystick(QWidget):
 
         self.speed_based = QComboBox(self)
         self.speed_based.addItems(speed_baseds)
-        self.speed_based.currentIndexChanged.connect(self.change_speed_based)
+        self.speed_based.currentIndexChanged.connect(self.changeSpeedBased)
         self.layout.addWidget(self.speed_based, 1, 1)
 
         self.ccwLabel = QLabel("Direction")
@@ -800,58 +800,58 @@ class InputMappingEncoderAsJoystick(QWidget):
         self.layout.addWidget(self.invertLabel, 3, 0 ,Qt.AlignRight)
 
         self.invert = QCheckBox(self)
-        self.invert.stateChanged.connect(self.change_invert)
+        self.invert.stateChanged.connect(self.changeInvert)
         self.layout.addWidget(self.invert, 3, 1)
 
-        self.thresholdLabel = QLabel("Speed Threshold")
-        self.layout.addWidget(self.thresholdLabel, 4, 0, Qt.AlignRight)
+        self.speedThresholdLabel = QLabel("Speed Threshold")
+        self.layout.addWidget(self.speedThresholdLabel, 4, 0, Qt.AlignRight)
 
-        self.threshold = QSlider(self)
-        self.threshold.sliderMoved.connect(self.change_threshold)
-        self.threshold.setRange(0, 20e3)
-        self.threshold.setTickInterval(5)
-        self.threshold.setOrientation(Qt.Horizontal)
-        self.layout.addWidget(self.threshold, 4, 1)
+        self.speedThreshold = QSlider(self)
+        self.speedThreshold.sliderMoved.connect(self.changeSpeedThreshold)
+        self.speedThreshold.setRange(0, 20e3)
+        self.speedThreshold.setTickInterval(5)
+        self.speedThreshold.setOrientation(Qt.Horizontal)
+        self.layout.addWidget(self.speedThreshold, 4, 1)
 
         self.thresholdVal = QLabel("")
         self.thresholdVal.setMinimumWidth(50)
         self.layout.addWidget(self.thresholdVal, 4, 2, Qt.AlignLeft)
 
-        self.linear_middleLabel = QLabel("Linear Middle")
-        self.layout.addWidget(self.linear_middleLabel, 5, 0, Qt.AlignRight)
+        self.linearMiddleLabel = QLabel("Linear Middle")
+        self.layout.addWidget(self.linearMiddleLabel, 5, 0, Qt.AlignRight)
 
-        self.linear_middle = QSlider(self)
-        self.linear_middle.sliderMoved.connect(self.change_linear_middle)
-        self.linear_middle.setRange(0, 1000)
-        self.linear_middle.setTickInterval(5)
-        self.linear_middle.setOrientation(Qt.Horizontal)
-        self.layout.addWidget(self.linear_middle, 5, 1)
+        self.linearMiddle = QSlider(self)
+        self.linearMiddle.sliderMoved.connect(self.changeLinearMiddle)
+        self.linearMiddle.setRange(0, 1000)
+        self.linearMiddle.setTickInterval(5)
+        self.linearMiddle.setOrientation(Qt.Horizontal)
+        self.layout.addWidget(self.linearMiddle, 5, 1)
 
-        self.linear_middleVal = QLabel("")
-        self.linear_middleVal.setMinimumWidth(50)
-        self.layout.addWidget(self.linear_middleVal, 5, 2, Qt.AlignLeft)
+        self.lienarMiddleVal = QLabel("")
+        self.lienarMiddleVal.setMinimumWidth(50)
+        self.layout.addWidget(self.lienarMiddleVal, 5, 2, Qt.AlignLeft)
 
-        self.linear_deadzoneLabel = QLabel("Linear Deadzone")
-        self.layout.addWidget(self.linear_deadzoneLabel, 6, 0, Qt.AlignRight)
+        self.linearDeadzoneLabel = QLabel("Linear Deadzone")
+        self.layout.addWidget(self.linearDeadzoneLabel, 6, 0, Qt.AlignRight)
 
-        self.linear_deadzone = QSlider(self)
-        self.linear_deadzone.sliderMoved.connect(self.change_linear_deadzone)
-        self.linear_deadzone.setRange(0, 1000)
-        self.linear_deadzone.setTickInterval(5)
-        self.linear_deadzone.setOrientation(Qt.Horizontal)
-        self.layout.addWidget(self.linear_deadzone, 6, 1)
+        self.linearDeadzone = QSlider(self)
+        self.linearDeadzone.sliderMoved.connect(self.changeLinearDeadzone)
+        self.linearDeadzone.setRange(0, 1000)
+        self.linearDeadzone.setTickInterval(5)
+        self.linearDeadzone.setOrientation(Qt.Horizontal)
+        self.layout.addWidget(self.linearDeadzone, 6, 1)
 
-        self.linear_deadzoneVal = QLabel("")
-        self.linear_deadzoneVal.setMinimumWidth(50)
-        self.layout.addWidget(self.linear_deadzoneVal, 6, 2, Qt.AlignLeft)
+        self.linearDeadzoneVal = QLabel("")
+        self.linearDeadzoneVal.setMinimumWidth(50)
+        self.layout.addWidget(self.linearDeadzoneVal, 6, 2, Qt.AlignLeft)
 
-        self.joystick_lrLabel = QLabel("Output Joystick")
-        self.layout.addWidget(self.joystick_lrLabel, 7, 0, Qt.AlignRight)
+        self.joystickOutLabel = QLabel("Output Joystick")
+        self.layout.addWidget(self.joystickOutLabel, 7, 0, Qt.AlignRight)
 
-        self.joystick_lr = QComboBox(self)
-        self.joystick_lr.addItems(joystickOutputs)
-        self.joystick_lr.currentIndexChanged.connect(self.change_joystickOut)
-        self.layout.addWidget(self.joystick_lr, 7, 1)
+        self.joystickOut = QComboBox(self)
+        self.joystickOut.addItems(JOYSTICK_OUTPUTS)
+        self.joystickOut.currentIndexChanged.connect(self.changeJoystickOut)
+        self.layout.addWidget(self.joystickOut, 7, 1)
 
         self.axisXYLabel = QLabel("Output Axis")
         self.layout.addWidget(self.axisXYLabel, 8, 0, Qt.AlignRight)
@@ -875,47 +875,47 @@ class InputMappingEncoderAsJoystick(QWidget):
             self.ccw.setEnabled(True)
             self.speed_based.setEnabled(True)
             self.threshold.setEnabled(True)
-            self.linear_middle.setEnabled(False)
-            self.linear_deadzone.setEnabled(False)
+            self.lienarMiddle.setEnabled(False)
+            self.linearDeadzone.setEnabled(False)
         else:
             self.ccw.setEnabled(False)
             self.speed_based.setEnabled(False)
             self.threshold.setEnabled(False)
-            self.linear_middle.setEnabled(True)
-            self.linear_deadzone.setEnabled(True)
+            self.lienarMiddle.setEnabled(True)
+            self.linearDeadzone.setEnabled(True)
         self.treeItem.updateText()
 
-    def change_speed_based(self, index):
-        self.treeItem.config.speed_based = index
+    def changeSpeedBased(self, index):
+        self.treeItem.config.speedBased = index
         self.treeItem.updateText()
 
-    def change_ccw(self, index):
+    def changeCcw(self, index):
         self.treeItem.config.ccw = index
         self.treeItem.updateText()
 
-    def change_invert(self, arg__1):
+    def changeInvert(self, arg__1):
         self.treeItem.config.invert = arg__1
         self.treeItem.updateText()
 
-    def change_threshold(self, arg__1):
-        self.treeItem.config.threshold = float(arg__1) / 1000.0
-        self.threshold.setValue(int(self.treeItem.config.threshold * 1000))
-        self.thresholdVal.setText(str(round(self.treeItem.config.threshold, 3))+" Hz")
+    def changeSpeedThreshold(self, arg__1):
+        self.treeItem.config.speedThreshold = float(arg__1) / 1000.0
+        self.speedThreshold.setValue(int(self.treeItem.config.speedThreshold * 1000))
+        self.speedThresholdVal.setText(str(round(self.treeItem.config.speedThreshold, 3))+" Hz")
         self.treeItem.updateText()
 
-    def change_linear_middle(self, arg__1):
-        self.treeItem.config.linear_middle = float(arg__1) / 1000.0
-        self.threshold.setValue(int(self.treeItem.config.linear_middle * 1000))
-        self.thresholdVal.setText(str(round(self.treeItem.config.linear_middle, 3)))
+    def changeLinearMiddle(self, arg__1):
+        self.treeItem.config.lienarMiddle = float(arg__1) / 1000.0
+        self.threshold.setValue(int(self.treeItem.config.lienarMiddle * 1000))
+        self.thresholdVal.setText(str(round(self.treeItem.config.lienarMiddle, 3)))
         self.treeItem.updateText()
 
-    def change_linear_deadzone(self, arg__1):
-        self.treeItem.config.linear_deadzone = float(arg__1) / 1000.0
-        self.threshold.setValue(int(self.treeItem.config.linear_deadzone * 1000))
-        self.thresholdVal.setText(str(round(self.treeItem.config.linear_deadzone, 3)))
+    def changeLinearDeadzone(self, arg__1):
+        self.treeItem.config.linearDeadzone = float(arg__1) / 1000.0
+        self.threshold.setValue(int(self.treeItem.config.linearDeadzone * 1000))
+        self.thresholdVal.setText(str(round(self.treeItem.config.linearDeadzone, 3)))
         self.treeItem.updateText()
 
-    def change_joystickOut(self, index):
+    def changeJoystickOut(self, index):
         self.treeItem.config.joystickOut = index
         self.treeItem.updateText()
 
@@ -929,21 +929,21 @@ class InputMappingEncoderAsJoystick(QWidget):
 
     def showMapping(self, treeItem):
         self.treeItem = treeItem
-        self.binary_based.setCurrentIndex(self.treeItem.config.binary_based)
-        self.change_binary_based(self.treeItem.config.binary_based)
-        self.speed_based.setCurrentIndex(self.treeItem.config.speed_based)
+        self.binaryBased.setCurrentIndex(self.treeItem.config.binaryBased)
+        self.chnageBinaryBased(self.treeItem.config.binaryBased)
+        self.speedBased.setCurrentIndex(self.treeItem.config.speedBased)
         self.ccw.setCurrentIndex(self.treeItem.config.ccw)
         if self.treeItem.config.invert:
             self.invert.setCheckState(Qt.Checked)
         else:
             self.invert.setCheckState(Qt.Unchecked)
-        self.threshold.setValue(int(self.treeItem.config.speed_threshold * 1000))
-        self.thresholdVal.setText(str(round(self.treeItem.config.speed_threshold, 3))+" Hz")
-        self.linear_middle.setValue(int(self.treeItem.config.linear_middle * 1000))
-        self.linear_middleVal.setText(str(round(self.treeItem.config.linear_middle, 3)))
-        self.linear_deadzone.setValue(int(self.treeItem.config.linear_deadzone * 1000))
-        self.linear_deadzoneVal.setText(str(round(self.treeItem.config.linear_deadzone, 3)))
-        self.joystick_lr.setCurrentIndex(self.treeItem.config.joystickOut)
+        self.speedThreshold.setValue(int(self.treeItem.config.speedThreshold * 1000))
+        self.speedThresholdVal.setText(str(round(self.treeItem.config.speedThreshold, 3))+" Hz")
+        self.lienarMiddle.setValue(int(self.treeItem.config.lienarMiddle * 1000))
+        self.lienarMiddleVal.setText(str(round(self.treeItem.config.lienarMiddle, 3)))
+        self.linearDeadzone.setValue(int(self.treeItem.config.linearDeadzone * 1000))
+        self.linearDeadzoneVal.setText(str(round(self.treeItem.config.linearDeadzone, 3)))
+        self.joystickOut.setCurrentIndex(self.treeItem.config.joystickOut)
         self.axisXY.setCurrentIndex(self.treeItem.config.axisXY)
         self.posNeg.setCurrentIndex(self.treeItem.config.posNeg)
         self.show()

@@ -1,5 +1,5 @@
 import sys
-from PySide6 import QtGui, QtQuick
+#from PySide6 import QtGui, QtQuick
 from PySide6.QtWidgets import *
 from PySide6.QtGui import QGuiApplication, QAction, QPixmap, QPalette, QPainter, QColor
 from PySide6.QtCore import QTimer, Slot, Qt, QCoreApplication, QSize
@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         self.app = app
         self.serialController = serialController
         
-        self.config = Controller_Configuration.fromFile(DEFAULT_CFG_FILE)
+        self.config = ControllerConfiguration.fromFile(DEFAULT_CFG_FILE)
         self.initUI()
         self.setWindowTitle("GMK Controller Configuration Tool")
 
@@ -72,7 +72,7 @@ class MainWindow(QMainWindow):
         if not file_name:
             return
         try:
-            self.config = self.config.print_config_to_file(file_name)
+            self.config = self.config.printConfigToFile(file_name)
         except Exception as e:
             ErrorMessageBox("Error Opening File", e, QMessageBox.Ok)
             return

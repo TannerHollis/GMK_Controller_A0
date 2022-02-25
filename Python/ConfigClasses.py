@@ -226,7 +226,7 @@ class ControllerConfiguration():
     def getNumberOfConfigurations(self):
         return len(self.configurations)
 
-    def set_LEDColors(self, LEDColors):
+    def setLEDColors(self, LEDColors):
         self.LEDColorsBytes = b""
         for i in self.LEDColors:
             self.LEDColorsBytes += bytes(i)
@@ -277,7 +277,7 @@ class ControllerConfiguration():
 
     def fromFile(filePath):
         with open(filePath, "rb") as f:
-            return ControllerConfiguration.from_bytes(f.read())
+            return ControllerConfiguration.fromBytes(f.read())
 
     def fromBytes(bytesIn):
         profileNumber = struct.unpack("<B", bytesIn[0:1])
@@ -546,11 +546,11 @@ class JoystickAsTrigger():
         return mapOutputTrigger(self.triggerOut)
 
 class EncoderAsButton():
-    def __init__(self, speedBased=0, ccw=0, invert=0, threshold=0, buttonOut=0):
+    def __init__(self, speedBased=0, ccw=0, invert=0, speedThreshold=0, buttonOut=0):
         self.speedBased = speedBased
         self.ccw = ccw
         self.invert = invert
-        self.threshold = float(threshold)
+        self.speedThreshold = float(speedThreshold)
         self.buttonOut = buttonOut
         self.type = INPUT_ENCODER_AS_BUTTON
         self.inputType = "encoder"
@@ -562,15 +562,15 @@ class EncoderAsButton():
         b0 |= self.speedBased << 0
         b0 |= self.ccw << 1
         b0 |= self.invert << 2
-        self.struct = struct.pack("<BBfB", self.type, b0, self.threshold, self.buttonOut)
+        self.struct = struct.pack("<BBfB", self.type, b0, self.speedThreshold, self.buttonOut)
         return self.struct
 
     def fromBytes(bytesIn):
-        (t, b0, threshold, buttonOut) = struct.unpack("<BBfB", bytesIn)
+        (t, b0, speedThreshold, buttonOut) = struct.unpack("<BBfB", bytesIn)
         speedBased = (b0 >> 0) & 1
         ccw = (b0 >> 1) & 1
         invert = (b0 >> 2) & 1
-        return EncoderAsButton(speedBased, ccw, invert, threshold, buttonOut)
+        return EncoderAsButton(speedBased, ccw, invert, speedThreshold, buttonOut)
 
     def outputMapping(self):
         return mapOutputButton(self.buttonOut)
@@ -620,11 +620,11 @@ class EncoderAsJoystick():
         return mapOutputJoystick(self.joystickOut, self.axisXY, self.posNeg)
 
 class EncoderAsKeyboard():
-    def __init__(self, speedBased=0, ccw=0, invert=0, threshold=0, string=""):
+    def __init__(self, speedBased=0, ccw=0, invert=0, speedThreshold=0, string=""):
         self.speedBased = speedBased
         self.ccw = ccw
         self.invert = invert
-        self.threshold = float(threshold)
+        self.speedThreshold = float(speedThreshold)
         self.string = string
         self.type = INPUT_ENCODER_AS_KEYBOARD
         self.inputType = "encoder"
@@ -636,15 +636,15 @@ class EncoderAsKeyboard():
         b0 |= self.speedBased << 0
         b0 |= self.ccw << 1
         b0 |= self.invert << 2
-        self.struct = struct.pack("<BBf{}s".format(len(self.string)), self.type, b0, self.threshold, self.string)
+        self.struct = struct.pack("<BBf{}s".format(len(self.string)), self.type, b0, self.speedThreshold, self.string)
         return self.struct
 
     def fromBytes(bytesIn, strLen):
-        (t, b0, threshold, string) = struct.unpack("<BBfB{}s".format(strLen), bytesIn)
+        (t, b0, speedThreshold, string) = struct.unpack("<BBfB{}s".format(strLen), bytesIn)
         speedBased = (b0 >> 0) & 1
         ccw = (b0 >> 1) & 1
         invert = (b0 >> 2) & 1
-        return EncoderAsKeyboard(speedBased, ccw, invert, threshold, string)
+        return EncoderAsKeyboard(speedBased, ccw, invert, speedThreshold, string)
 
     def outputMapping(self):
         return "Keyboard"
@@ -716,10 +716,10 @@ def test():
     config.addConfig(JoystickAsTrigger(JOYSTICK_LEFT, AXIS_X, AXIS_NON_INVERTED, AXIS_POSITIVE, 0.5, TRIGGER_LEFT))
     config.addConfig(EncoderAsJoystick(ENCODER_LINEAR_BASED, ENCODER_DIRECTION_BASED, ENCODER_DIR_CLOCKWISE, AXIS_NON_INVERTED, 1.0, 0.5, 0.05, AXIS_X, AXIS_POSITIVE))
 
-	#Configuration Directory
-	configDir = "configs/"
-
-	#Check if folder exists
+    #Configuration Directory
+    configDir = "configs/"
+    
+    #Check if folder exists
     if not os.path.isdir(configDir):
         os.makedirs(configDir)
         print("Created folder : ", configDir)

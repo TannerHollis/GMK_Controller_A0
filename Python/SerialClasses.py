@@ -1,6 +1,6 @@
 import serial
 import serial.tools.list_ports as list_ports
-from config_classes import *
+from ConfigClasses import *
 
 VID = 1155
 PID = 22336
