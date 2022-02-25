@@ -1,6 +1,8 @@
 import struct
 import os
 
+DEFAULT_CFG_FILE = "GMK Controller - Default Configuration 1"
+
 #Define Input Mapping Configurations
 INPUT_BUTTON_AS_BUTTON = 0
 INPUT_BUTTON_AS_JOYSTICK = 1
@@ -70,6 +72,58 @@ ENCODER_DIR_COUNTERCLOCKWISE = 1
 CONFIGURATION_SIZE = 2048
 CONFIG_NAME_LENGTH = 64
 BYTE_ENCODING = "utf-8"
+
+def map_output_button(button_out):
+    if button_out == BUTTON_A:
+        return "a"
+    if button_out == BUTTON_B:
+        return "b"
+    if button_out == BUTTON_X:
+        return "x"
+    if button_out == BUTTON_Y:
+        return "y"
+    if button_out == BUTTON_LB:
+        return "left bumper"
+    if button_out == BUTTON_RB:
+        return "right bumper"
+    if button_out == BUTTON_LTH:
+        return "left thumbstick"
+    if button_out == BUTTON_RTH:
+        return "right thumbstick"
+    if button_out == BUTTON_UP:
+        return "up"
+    if button_out == BUTTON_DOWN:
+        return "down"
+    if button_out == BUTTON_LEFT:
+        return "left"
+    if button_out == BUTTON_RIGHT:
+        return "right"
+    if button_out == BUTTON_START:
+        return "start"
+    if button_out == BUTTON_BACK:
+        return "back"
+
+def map_output_joystick(joystick_lr, axis_xy=-1, pos_neg=-1):
+    output_string = ""
+    if joystick_lr == JOYSTICK_LEFT:
+        output_string += "left joystick"
+    if joystick_lr == JOYSTICK_RIGHT:
+        output_string += "right joystick"
+    if axis_xy == AXIS_X:
+        output_string += " x"
+    if axis_xy == AXIS_Y:
+        output_string += " y"
+    if pos_neg == AXIS_POSITIVE:
+        output_string += " positive"
+    if pos_neg == AXIS_NEGATIVE:
+        output_string += " negative"
+    return output_string
+
+def map_output_trigger(trigger_lr):
+    if trigger_lr == TRIGGER_LEFT:
+        return "left trigger"
+    if trigger_lr == TRIGGER_RIGHT:
+        return "right trigger"
 
 class Controller_Output():
     def __init__(self, a, b, x, y, lb, rb, lth, rth, up, down, left, right, start, back, joystick_lx, joystick_ly, joystick_rx, joystick_ry, trigger_l, trigger_r):
@@ -185,7 +239,7 @@ class Controller_Configuration():
         led_colors = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
         for i in range(4):
             for j in range(3):
-                led_colors[i, j] = bytes_in[i + j]
+                led_colors[i][j] = bytes_in[i*3 + j]
         return led_colors
 
     def print_config_to_file(self, path):
@@ -227,14 +281,20 @@ class Controller_Configuration():
                     f_txt.write("{}, ".format(byte))
             f_txt.write("}")
 
+    def from_file(file_path):
+        with open(file_path, "rb") as f:
+            return Controller_Configuration.from_bytes(f.read())
+            
+
     def from_bytes(bytes_in):
-        profile_number = struct.unpack("<B", bytes_in[0])
-        led_colors = Controller_Configuration.led_bytes_to_colors(struct.unpack("<{}B".format(12), bytes_in[1:14]))
-        config_name = struct.unpack("<{}s".format(CONFIG_NAME_LENGTH), bytes_in[14:15+CONFIG_NAME_LENGTH])
-        cc = Controller_Configuration(profile_number, config_name, led_colors)
+        profile_number = struct.unpack("<B", bytes_in[0:1])
+        led_colors = Controller_Configuration.led_bytes_to_colors(struct.unpack("<{}B".format(12), bytes_in[1:13]))
+        led_brightness = struct.unpack("<B", bytes_in[13:14])
+        config_name = struct.unpack("<{}s".format(CONFIG_NAME_LENGTH), bytes_in[14:14+CONFIG_NAME_LENGTH])
+        cc = Controller_Configuration(profile_number, config_name, led_colors, led_brightness)
         config_start = True
         config_start_address = 0
-        for i in range(15 + CONFIG_NAME_LENGTH, len(bytes_in)):
+        for i in range(14 + CONFIG_NAME_LENGTH, len(bytes_in)):
             if(config_start):
                 t = bytes_in[i]
                 config_start = False
@@ -242,13 +302,14 @@ class Controller_Configuration():
             if bytes_in[i] == 255:
                 config_start = True
                 cc.add_config(Controller_Configuration.config_from_bytes(t, bytes_in[config_start_address : i]))
+        return cc
 
     def config_from_bytes(t, bytes_in):
         if t == INPUT_BUTTON_AS_BUTTON:
             return Button_as_Button.from_bytes(bytes_in)
         if t == INPUT_BUTTON_AS_JOYSTICK:
             return Button_as_Joystick.from_bytes(bytes_in)
-        if t == INPUT_BUTTON_KEYBOARD:
+        if t == INPUT_BUTTON_AS_KEYBOARD:
             return Button_as_Keyboard.from_bytes(bytes_in, len(bytes_in) - 2)
         if t == INPUT_BUTTON_AS_TRIGGER:
             return Button_as_Trigger.from_bytes(bytes_in)
@@ -270,10 +331,12 @@ class Controller_Configuration():
             return Encoder_as_Trigger.from_bytes(bytes_in)
 
 class Button_as_Button():
-    def __init__(self, button_in, button_out):
+    def __init__(self, button_in=0, button_out=0):
         self.button_in = button_in
         self.button_out = button_out
         self.type = INPUT_BUTTON_AS_BUTTON
+        self.input_type = "button"
+        self.output_type = "button"
         self.struct = b""
 
     def to_bytes(self):
@@ -284,13 +347,18 @@ class Button_as_Button():
         (t, button_in, button_out) = struct.unpack("<BBB", bytes_in)
         return Button_as_Button(button_in, button_out)
 
+    def output_mapping(self):
+        return map_output_button(self.button_out)
+
 class Button_as_Joystick():
-    def __init__(self, button_in, joystick_lr, axis_xy, pos_neg):
+    def __init__(self, button_in=0, joystick_lr=0, axis_xy=0, pos_neg=0):
         self.button_in = button_in
         self.joystick_lr = joystick_lr
-        self.axis_xy
-        self.pos_neg
+        self.axis_xy = axis_xy
+        self.pos_neg = pos_neg
         self.type = INPUT_BUTTON_AS_JOYSTICK
+        self.input_type = "button"
+        self.output_type = "joystick"
         self.struct = b""
 
     def to_bytes(self):
@@ -307,11 +375,16 @@ class Button_as_Joystick():
         pos_neg = (b1 >> 2) & 1
         return Button_as_Joystick(button_in, joystick_lr, axis_xy, pos_neg)
 
+    def output_mapping(self):
+        return map_output_joystick(self.joystick_lr, self.axis_xy, self.pos_neg)
+
 class Button_as_Keyboard():
-    def __init__(self, button_in, string):
+    def __init__(self, button_in=0, string=0):
         self.button_in = button_in
         self.string = string
         self.type = INPUT_BUTTON_AS_KEYBOARD
+        self.input_type = "button"
+        self.output_type = "keyboard"
         self.struct = b""
 
     def to_bytes(self):
@@ -320,13 +393,18 @@ class Button_as_Keyboard():
 
     def from_bytes(bytes_in, str_len):
         (t, button_in, string) = struct.unpack("<BB{}s".format(str_len), bytes_in)
-        return Button_as_Keyboard(button_in, string)
+        return Button_as_Keyboard(button_in, string.decode(BYTE_ENCODING))
+
+    def output_mapping(self):
+        return "Keyboard"
 
 class Button_as_Trigger():
-    def __init__(self, button_in, trigger_lr):
+    def __init__(self, button_in=0, trigger_lr=0):
         self.button_in = button_in
         self.trigger_lr = trigger_lr
         self.type = INPUT_BUTTON_AS_TRIGGER
+        self.input_type = "button"
+        self.output_type = "trigger"
         self.struct = b""
 
     def to_bytes(self):
@@ -337,8 +415,11 @@ class Button_as_Trigger():
         (t, button_in, trigger_lr) = struct.unpack("<BBB", bytes_in)
         return Button_as_Trigger(button_in, trigger_lr)
 
+    def output_mapping(self):
+        return map_output_trigger(self.trigger_lr)
+
 class Joystick_as_Button():
-    def __init__(self, joystick_lr, axis_xy, invert, pos_neg, threshold, button_out):
+    def __init__(self, joystick_lr=0, axis_xy=0, invert=0, pos_neg=0, threshold=0, button_out=0):
         self.joystick_lr = joystick_lr
         self.axis_xy = axis_xy
         self.invert = invert
@@ -346,6 +427,8 @@ class Joystick_as_Button():
         self.threshold = float(threshold)
         self.button_out = button_out
         self.type = INPUT_JOYSTICK_AS_BUTTON
+        self.input_type = "joystick"
+        self.output_type = "button"
         self.struct = b""
 
     def to_bytes(self):
@@ -359,13 +442,17 @@ class Joystick_as_Button():
 
     def from_bytes(bytes_in):
         (t, b0, threshold, button_out) = struct.unpack("<BBfB", bytes_in)
-        axis_xy = (b0 >> 0) & 1
-        invert = (b0 >> 1) & 1
-        pos_neg = (b0 >> 2) & 1
+        joystick_lr = (b0 >> 0) & 1
+        axis_xy = (b0 >> 1) & 1
+        invert = (b0 >> 2) & 1
+        pos_neg = (b0 >> 3) & 1
         return Joystick_as_Button(joystick_lr, axis_xy, invert, pos_neg, threshold, button_out)
 
+    def output_mapping(self):
+        return map_output_button(self.button_out)
+
 class Joystick_as_Joystick():
-    def __init__(self, joystick_in, invert_x, invert_y, joystick_out, deadzone_x, deadzone_y):
+    def __init__(self, joystick_in=0, invert_x=0, invert_y=0, joystick_out=0, deadzone_x=0, deadzone_y=0):
         self.joystick_in = joystick_in
         self.invert_x = invert_x
         self.invert_y = invert_y
@@ -373,6 +460,8 @@ class Joystick_as_Joystick():
         self.deadzone_x = float(deadzone_x)
         self.deadzone_y = float(deadzone_y)
         self.type = INPUT_JOYSTICK_AS_JOYSTICK
+        self.input_type = "joystick"
+        self.output_type = "joystick"
         self.struct = bytearray(10)
 
     def to_bytes(self):
@@ -392,14 +481,20 @@ class Joystick_as_Joystick():
         joystick_out = (b0 >> 3) & 1
         return Joystick_as_Joystick(joystick_in, invert_x, invert_y, joystick_out, deadzone_x, deadzone_y)
 
+    def output_mapping(self):
+        return map_output_joystick(self.joystick_out)
+
 class Joystick_as_Keyboard():
-    def __init__(self, joystick_in, axis_xy, invert, pos_neg, threshold, string):
+    def __init__(self, joystick_in=0, axis_xy=0, invert=0, pos_neg=0, threshold=0, string=0):
         self.joystick_in = joystick_in
         self.axis_xy = axis_xy
         self.invert = invert
         self.pos_neg = pos_neg
         self.threshold = float(threshold)
+        self.string = string
         self.type = INPUT_JOYSTICK_AS_KEYBOARD
+        self.input_type = "joystick"
+        self.output_type = "keyboard"
         self.struct = b""
 
     def to_bytes(self):
@@ -417,10 +512,13 @@ class Joystick_as_Keyboard():
         axis_xy = (b0 >> 1) & 1
         invert = (b0 >> 2) & 1
         pos_neg = (b0 >> 3) & 1
-        return Joystick_as_Keyboard(joystick_in, axis_xy, invert, pos_neg, threshold, string)
+        return Joystick_as_Keyboard(joystick_in, axis_xy, invert, pos_neg, threshold, string.decode(BYTE_ENCODING))
+
+    def output_mapping(self):
+        return "Keyboard"
 
 class Joystick_as_Trigger():
-    def __init__(self, joystick_in, axis_xy, invert, pos_neg, trigger_out, threshold):
+    def __init__(self, joystick_in=0, axis_xy=0, invert=0, pos_neg=0, threshold=0, trigger_out=0):
         self.joystick_in = joystick_in
         self.axis_xy = axis_xy
         self.invert = invert
@@ -428,6 +526,8 @@ class Joystick_as_Trigger():
         self.trigger_out = trigger_out
         self.threshold = float(threshold)
         self.type = INPUT_JOYSTICK_AS_TRIGGER
+        self.input_type = "joystick"
+        self.output_type = "trigger"
         self.struct = b""
 
     def to_bytes(self):
@@ -437,7 +537,7 @@ class Joystick_as_Trigger():
         b0 |= self.invert << 2
         b0 |= self.pos_neg << 3
         b0 |= self.trigger_out << 4
-        self.struct = struct.pack("<BBf".format(len(self.string)), self.type, b0, self.threshold)
+        self.struct = struct.pack("<BBf", self.type, b0, self.threshold)
         return self.struct
 
     def from_bytes(bytes_in):
@@ -449,14 +549,19 @@ class Joystick_as_Trigger():
         trigger_out = (b0 >> 4) & 1
         return Joystick_as_Trigger(joystick_in, axis_xy, invert, pos_neg, trigger_out)
 
+    def output_mapping(self):
+        return map_output_trigger(self.trigger_out)
+
 class Encoder_as_Button():
-    def __init__(self, speed_based, ccw, invert, threshold, button_out):
+    def __init__(self, speed_based=0, ccw=0, invert=0, threshold=0, button_out=0):
         self.speed_based = speed_based
         self.ccw = ccw
         self.invert = invert
         self.threshold = float(threshold)
         self.button_out = button_out
         self.type = INPUT_ENCODER_AS_BUTTON
+        self.input_type = "encoder"
+        self.output_type = "button"
         self.struct = b""
 
     def to_bytes(self):
@@ -474,8 +579,11 @@ class Encoder_as_Button():
         invert = (b0 >> 2) & 1
         return Encoder_as_Button(speed_based, ccw, invert, threshold, button_out)
 
+    def output_mapping(self):
+        return map_output_button(self.button_out)
+
 class Encoder_as_Joystick():
-    def __init__(self, binary_based, speed_based, ccw, invert, speed_threshold, linear_middle, linear_deadzone, joystick_out, axis_xy, pos_neg):
+    def __init__(self, binary_based=0, speed_based=0, ccw=0, invert=0, speed_threshold=0, linear_middle=0, linear_deadzone=0, joystick_out=0, axis_xy=0, pos_neg=0):
         self.binary_based = binary_based
         self.speed_based = speed_based
         self.ccw = ccw
@@ -487,6 +595,8 @@ class Encoder_as_Joystick():
         self.axis_xy = axis_xy
         self.pos_neg = pos_neg
         self.type = INPUT_ENCODER_AS_JOYSTICK
+        self.input_type = "encoder"
+        self.output_type = "joystick"
         self.struct = b""
 
     def to_bytes(self):
@@ -496,10 +606,10 @@ class Encoder_as_Joystick():
         b0 |= self.ccw << 2
         b0 |= self.invert << 3
         b13 = 0
-        b13 |= joystick_out << 0
-        b13 |= axis_xy << 1
-        b13 |= pos_neg << 2
-        self.struct = struct.pack("<BBfffB".format(len(self.string)), self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, b13)
+        b13 |= self.joystick_out << 0
+        b13 |= self.axis_xy << 1
+        b13 |= self.pos_neg << 2
+        self.struct = struct.pack("<BBfffB", self.type, b0, self.speed_threshold, self.linear_middle, self.linear_deadzone, b13)
         return self.struct
 
     def from_bytes(bytes_in):
@@ -513,14 +623,19 @@ class Encoder_as_Joystick():
         pos_neg = (b13 >> 2) & 1
         return Encoder_as_Joystick(binary_based, speed_based, ccw, invert, speed_threshold, linear_middle, linear_deadzone, joystick_out, axis_xy, pos_neg)
 
+    def output_mapping(self):
+        return map_output_joystick(self.joystick_out, self.axis_xy, self.pos_neg)
+
 class Encoder_as_Keyboard():
-    def __init__(self, speed_based, ccw, invert, threshold, string):
+    def __init__(self, speed_based=0, ccw=0, invert=0, threshold=0, string=0):
         self.speed_based = speed_based
         self.ccw = ccw
         self.invert = invert
         self.threshold = float(threshold)
         self.string = string
         self.type = INPUT_ENCODER_AS_KEYBOARD
+        self.input_type = "encoder"
+        self.output_type = "keyboard"
         self.struct = b""
 
     def to_bytes(self):
@@ -538,8 +653,11 @@ class Encoder_as_Keyboard():
         invert = (b0 >> 2) & 1
         return Encoder_as_Keyboard(speed_based, ccw, invert, threshold, string)
 
+    def output_mapping(self):
+        return "Keyboard"
+
 class Encoder_as_Trigger():
-    def __init__(self, binary_based, speed_based, ccw, invert, speed_threshold, linear_middle, linear_deadzone, trigger_out):
+    def __init__(self, binary_based=0, speed_based=0, ccw=0, invert=0, speed_threshold=0, linear_middle=0, linear_deadzone=0, trigger_out=0):
         self.speed_based = speed_based
         self.ccw = ccw
         self.invert = invert
@@ -548,6 +666,8 @@ class Encoder_as_Trigger():
         self.linear_deadzone = float(linear_deadzone)
         self.trigger_out = trigger_out
         self.type = INPUT_ENCODER_AS_TRIGGER
+        self.input_type = "encoder"
+        self.output_type = "trigger"
         self.struct = b""
 
     def to_bytes(self):
@@ -566,10 +686,13 @@ class Encoder_as_Trigger():
         ccw = (b0 >> 2) & 1
         invert = (b0 >> 3) & 1
         return Encoder_as_Trigger(binary_based, speed_based, ccw, invert, speed_threshold, linear_middle, linear_deadzone, trigger_out)
-    
-if __name__ == "__main__":
+
+    def output_mapping(self):
+        return map_output_trigger(self.trigger_out)
+
+def test():
     print("Creating Default Joystick Configurations")
-    config0 = Controller_Configuration(0, "GMK Controller - Default Configuration 1", [[255, 0, 0], [0, 255, 0], [0, 0, 255], [50, 0, 50]], 32)
+    config0 = Controller_Configuration(0, DEFAULT_CFG_FILE, [[255, 0, 0], [0, 255, 0], [0, 0, 255], [50, 0, 50]], 32)
     config0.add_config(Button_as_Button(BUTTON_IN_0, BUTTON_A))
     config0.add_config(Button_as_Button(BUTTON_IN_1, BUTTON_B))
     config0.add_config(Button_as_Button(BUTTON_IN_2, BUTTON_X))
@@ -578,8 +701,8 @@ if __name__ == "__main__":
     config0.add_config(Button_as_Button(BUTTON_IN_5, BUTTON_RB))
     config0.add_config(Button_as_Button(BUTTON_IN_6, BUTTON_RTH))
     config0.add_config(Button_as_Button(BUTTON_IN_7, BUTTON_RTH))
-    config0.add_config(Button_as_Button(BUTTON_IN_8, BUTTON_LEFT))
-    config0.add_config(Button_as_Button(BUTTON_IN_9, BUTTON_RIGHT))
+    config0.add_config(Button_as_Button(BUTTON_IN_8, BUTTON_UP))
+    config0.add_config(Button_as_Button(BUTTON_IN_9, BUTTON_DOWN))
     config0.add_config(Button_as_Button(BUTTON_IN_10, BUTTON_START))
     config0.add_config(Button_as_Button(BUTTON_IN_11, BUTTON_BACK))
 
@@ -589,7 +712,19 @@ if __name__ == "__main__":
     config0.add_config(Joystick_as_Joystick(JOYSTICK_IN_0, AXIS_NON_INVERTED, AXIS_NON_INVERTED, JOYSTICK_LEFT, 0.05, 0.05))
     config0.add_config(Joystick_as_Joystick(JOYSTICK_IN_1, AXIS_NON_INVERTED, AXIS_NON_INVERTED, JOYSTICK_RIGHT, 0.05, 0.05))
 
-    config0.add_config(Encoder_as_Button(ENCODER_SPEED_BASED, ENCODER_DIR_CLOCKWISE, AXIS_NON_INVERTED, 1.0, BUTTON_LEFT))
-    config0.add_config(Encoder_as_Button(ENCODER_SPEED_BASED, ENCODER_DIR_COUNTERCLOCKWISE, AXIS_NON_INVERTED, 1.0, BUTTON_RIGHT))
+    config0.add_config(Encoder_as_Button(ENCODER_SPEED_BASED, ENCODER_DIR_CLOCKWISE, AXIS_NON_INVERTED, 5.0, BUTTON_LEFT))
+    config0.add_config(Encoder_as_Button(ENCODER_SPEED_BASED, ENCODER_DIR_COUNTERCLOCKWISE, AXIS_NON_INVERTED, 5.0, BUTTON_RIGHT))
+
+    #Extra for Testing...
+    config0.add_config(Button_as_Joystick(BUTTON_IN_0, JOYSTICK_LEFT, AXIS_X, AXIS_POSITIVE))
+    config0.add_config(Button_as_Keyboard(BUTTON_IN_1, "GMK Controller Default"))
+    config0.add_config(Joystick_as_Button(JOYSTICK_IN_0, AXIS_Y, AXIS_POSITIVE, AXIS_NON_INVERTED, 0.95, BUTTON_A))
+    config0.add_config(Joystick_as_Keyboard(JOYSTICK_LEFT, AXIS_X, AXIS_NON_INVERTED, AXIS_POSITIVE, 0.95, "GMK Controller Default"))
+    config0.add_config(Joystick_as_Trigger(JOYSTICK_LEFT, AXIS_X, AXIS_NON_INVERTED, AXIS_POSITIVE, 0.5, TRIGGER_LEFT))
+    config0.add_config(Encoder_as_Joystick(ENCODER_LINEAR_BASED, ENCODER_DIRECTION_BASED, ENCODER_DIR_CLOCKWISE, AXIS_NON_INVERTED, 1.0, 0.5, 0.05, AXIS_X, AXIS_POSITIVE))
 
     config0.print_config_to_file("configs/")
+    return config0
+
+if __name__ == "__main__":
+    config = test()

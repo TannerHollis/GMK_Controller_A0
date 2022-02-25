@@ -35,7 +35,10 @@ class Serial_Controller(serial.Serial):
 
     def connect_with_port(self, port):
         self.port = port
-        self.open()
+        try:
+            self.open()
+        except:
+            print("Could not open device on port: {}".format(self.port))
 
     def ping(self):
         if self.check_connection():
@@ -57,4 +60,14 @@ class Serial_Controller(serial.Serial):
             self.close()
             return False
 
-serial_controller = Serial_Controller()
+if __name__ == "__main__":
+    comm_ports = Serial_Controller.get_devices()
+    if comm_ports: 
+        serial_controller = Serial_Controller()
+        print("Available ports:")
+        for port in Serial_Controller.get_devices():
+            print(" {}".format(port))    
+        port = input("PORT: ")
+        serial_controller.connect_with
+    else:
+        print("No devices available to connect to. Please check cable and try again.")
