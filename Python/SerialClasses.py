@@ -18,22 +18,22 @@ CMD_CONTROLLER_DATA = 0x60
 CMD_PING = 0x70
 CMD_CHANGE_CONFIG = 0x80
 
-class Serial_Controller(serial.Serial):
+class SerialController(serial.Serial):
     def __init__(self):
         super().__init__()
         self.parity = "N"
         self.baudrate = BAUDRATE
         self.timeout = TIMEOUT
-        self.ports = Serial_Controller.get_devices()
+        self.ports = SerialController.getDevices()
 
-    def get_devices():
+    def getDevices():
         l = []
         for device in list_ports.comports():
             if device.vid == VID and device.pid == PID:
                 l.append(device.usb_description())
         return l
 
-    def connect_with_port(self, port):
+    def connectWithPort(self, port):
         self.port = port
         try:
             self.open()
@@ -41,33 +41,32 @@ class Serial_Controller(serial.Serial):
             print("Could not open device on port: {}".format(self.port))
 
     def ping(self):
-        if self.check_connection():
+        if self.checkConnection():
             self.write(bytes([CMD_PING]))
             if self.read(1) == b"":
                 self.close()
 
-    def get_configuration(self, config):
-        if self.check_connection():
+    def getConfiguration(self, config):
+        if self.checkConnection():
             self.write(bytes([CMD_READ_CONFIG | config]))
-            bytes_out = self.read(CONFIGURATION_SIZE)
-            return Controller_Configuration.from_bytes(bytes_out)
-            
+            bytesOut = self.read(CONFIGURATION_SIZE)
+            return ControllerConfiguration.from_bytes(bytesOut)
         
-    def check_connection(self):
-        if self.port in Serial_Controller.get_devices():
+    def checkConnection(self):
+        if self.port in SerialController.getDevices():
             return True
         else:
             self.close()
             return False
 
 if __name__ == "__main__":
-    comm_ports = Serial_Controller.get_devices()
-    if comm_ports: 
-        serial_controller = Serial_Controller()
+    commPorts = SerialController.getDevices()
+    if commPorts: 
+        serialController = SerialController()
         print("Available ports:")
-        for port in Serial_Controller.get_devices():
+        for port in SerialController.getDevices():
             print(" {}".format(port))    
         port = input("PORT: ")
-        serial_controller.connect_with
+        serialController.connectWithPort(port)
     else:
         print("No devices available to connect to. Please check cable and try again.")
