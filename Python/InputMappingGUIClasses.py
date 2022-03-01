@@ -8,9 +8,9 @@ JOYSTICK_OUTPUTS = ["Left Joystick", "Right Joystick"]
 AXES = ["X", "Y"]
 POLARITY = ["Positive", "Negative"]
 TRIGGER_OUTPUTS = ["Left Trigger", "Right Trigger"]
-ENCODER_FUNCTION_0 = ["Binary Based", "Linear Based"]
+ENCODER_FUNCTION_0 = ["Linear Based", "Binary Based (On/Off)"]
 ENCODER_FUNCTION_1 = ["Direction Based", "Speed Based"]
-ENCODER_DIRS = ["Clockwise", "Counter Clockwise"]
+ENCODER_DIRECTIONS = ["Clockwise", "Counter Clockwise"]
 
 class InputMappingDefault(QWidget):
     def __init__(self, parent, treeItem):
@@ -40,6 +40,7 @@ class InputMappingButtonAsButton(QWidget):
 
     def initUI(self):
         self.layout = QGridLayout(self)
+        self.layout.setVerticalSpacing(0)
 
         self.buttonInLabel = QLabel("Input Button")
         self.layout.addWidget(self.buttonInLabel, 0, 0, Qt.AlignRight)
@@ -107,7 +108,7 @@ class InputMappingButtonAsJoystick(QWidget):
         self.axisXY = QComboBox(self)
         self.axisXY.addItems(AXES)
         self.axisXY.currentIndexChanged.connect(self.changeAxisXY)
-        self.layout.addWidget(self.axisaxisXY, 2, 1)
+        self.layout.addWidget(self.axisXY, 2, 1)
 
         self.posNegLabel = QLabel("Positive/Negative")
         self.layout.addWidget(self.posNegLabel, 3, 0, Qt.AlignRight)
@@ -227,7 +228,7 @@ class InputMappingButtonAsTrigger(QWidget):
     def showMapping(self, treeItem):
         self.treeItem = treeItem
         self.buttonIn.setCurrentIndex(self.treeItem.config.buttonIn)
-        self.trigger_lr.setCurrentIndex(self.treeItem.config.triggerOut)
+        self.triggerOut.setCurrentIndex(self.treeItem.config.triggerOut)
         self.show()
 
     def closeMapping(self):
@@ -324,7 +325,7 @@ class InputMappingJoystickAsButton(QWidget):
 
     def showMapping(self, treeItem):
         self.treeItem = treeItem
-        self.joystick_lr.setCurrentIndex(self.treeItem.config.joystickIn)
+        self.joystickIn.setCurrentIndex(self.treeItem.config.joystickIn)
         self.axisXY.setCurrentIndex(self.treeItem.config.axisXY)
         self.posNeg.setCurrentIndex(self.treeItem.config.posNeg)
         if self.treeItem.config.invert:
@@ -470,7 +471,7 @@ class InputMappingJoystickAsKeyboard(QWidget):
         self.layout.addWidget(self.joystickInLabel, 0, 0, Qt.AlignRight)
 
         self.joystickIn = QComboBox(self)
-        self.joystickIn.addItems(joystickOutputs)
+        self.joystickIn.addItems(JOYSTICK_OUTPUTS)
         self.joystickIn.currentIndexChanged.connect(self.changeJoystickIn)
         self.layout.addWidget(self.joystickIn, 0, 1)
 
@@ -576,7 +577,7 @@ class InputMappingJoystickAsTrigger(QWidget):
         self.layout.addWidget(self.joystickInLabel, 0, 0, Qt.AlignRight)
 
         self.joystickIn = QComboBox(self)
-        self.joystickIn.addItems(joystickOutputs)
+        self.joystickIn.addItems(JOYSTICK_OUTPUTS)
         self.joystickIn.currentIndexChanged.connect(self.changeJoystickIn)
         self.layout.addWidget(self.joystickIn, 0, 1)
 
@@ -652,7 +653,7 @@ class InputMappingJoystickAsTrigger(QWidget):
 
     def showMapping(self, treeItem):
         self.treeItem = treeItem
-        self.joystick_lr.setCurrentIndex(self.treeItem.config.joystickIn)
+        self.joystickIn.setCurrentIndex(self.treeItem.config.joystickIn)
         self.axisXY.setCurrentIndex(self.treeItem.config.axisXY)
         self.posNeg.setCurrentIndex(self.treeItem.config.posNeg)
         if self.treeItem.config.invert:
@@ -690,7 +691,7 @@ class InputMappingEncoderAsButton(QWidget):
         self.layout.addWidget(self.ccwLabel, 1, 0, Qt.AlignRight)
 
         self.ccw = QComboBox(self)
-        self.ccw.addItems(directions)
+        self.ccw.addItems(ENCODER_DIRECTIONS)
         self.ccw.currentIndexChanged.connect(self.changeCcw)
         self.layout.addWidget(self.ccw, 1, 1)
 
@@ -698,28 +699,28 @@ class InputMappingEncoderAsButton(QWidget):
         self.layout.addWidget(self.invertLabel, 2, 0 ,Qt.AlignRight)
 
         self.invert = QCheckBox(self)
-        self.invert.stateChanged.connect(self.change_invert)
+        self.invert.stateChanged.connect(self.changeInvert)
         self.layout.addWidget(self.invert, 2, 1)
 
-        self.thresholdLabel = QLabel("Speed Threshold")
-        self.layout.addWidget(self.thresholdLabel, 3, 0, Qt.AlignRight)
+        self.speedThresholdLabel = QLabel("Speed Threshold")
+        self.layout.addWidget(self.speedThresholdLabel, 3, 0, Qt.AlignRight)
 
-        self.threshold = QSlider(self)
-        self.threshold.sliderMoved.connect(self.changeThreshold)
-        self.threshold.setRange(0, 20e3)
-        self.threshold.setTickInterval(5)
-        self.threshold.setOrientation(Qt.Horizontal)
-        self.layout.addWidget(self.threshold, 3, 1)
+        self.speedThreshold = QSlider(self)
+        self.speedThreshold.sliderMoved.connect(self.changeSpeedThreshold)
+        self.speedThreshold.setRange(0, 20e3)
+        self.speedThreshold.setTickInterval(5)
+        self.speedThreshold.setOrientation(Qt.Horizontal)
+        self.layout.addWidget(self.speedThreshold, 3, 1)
 
-        self.thresholdVal = QLabel("")
-        self.thresholdVal.setMinimumWidth(50)
-        self.layout.addWidget(self.thresholdVal, 3, 2, Qt.AlignLeft)
+        self.speedThresholdVal = QLabel("")
+        self.speedThresholdVal.setMinimumWidth(50)
+        self.layout.addWidget(self.speedThresholdVal, 3, 2, Qt.AlignLeft)
 
-        self.trigger_lrLabel = QLabel("Output Button")
-        self.layout.addWidget(self.trigger_lrLabel, 5, 0, Qt.AlignRight)
+        self.buttonOutLabel = QLabel("Output Button")
+        self.layout.addWidget(self.buttonOutLabel, 5, 0, Qt.AlignRight)
 
         self.buttonOut = QComboBox(self)
-        self.buttonOut.addItems(buttonOutputs)
+        self.buttonOut.addItems(BUTTON_OUTPUTS)
         self.buttonOut.currentIndexChanged.connect(self.changeButtonOut)
         self.layout.addWidget(self.buttonOut, 5, 1)
 
@@ -735,10 +736,10 @@ class InputMappingEncoderAsButton(QWidget):
         self.treeItem.config.invert = arg__1
         self.treeItem.updateText()
 
-    def changeThreshold(self, arg__1):
-        self.treeItem.config.threshold = float(arg__1) / 1000.0
-        self.threshold.setValue(int(self.treeItem.config.threshold * 1000))
-        self.thresholdVal.setText(str(round(self.treeItem.config.threshold, 3))+" Hz")
+    def changeSpeedThreshold(self, arg__1):
+        self.treeItem.config.speedThreshold = float(arg__1) / 1000.0
+        self.speedThreshold.setValue(int(self.treeItem.config.speedThreshold * 1000))
+        self.speedThresholdVal.setText(str(round(self.treeItem.config.speedThreshold, 3))+" Hz")
         self.treeItem.updateText()
 
     def changeButtonOut(self, index):
@@ -747,14 +748,14 @@ class InputMappingEncoderAsButton(QWidget):
 
     def showMapping(self, treeItem):
         self.treeItem = treeItem
-        self.speed_based.setCurrentIndex(self.treeItem.config.speedBased)
+        self.speedBased.setCurrentIndex(self.treeItem.config.speedBased)
         self.ccw.setCurrentIndex(self.treeItem.config.ccw)
         if self.treeItem.config.invert:
             self.invert.setCheckState(Qt.Checked)
         else:
             self.invert.setCheckState(Qt.Unchecked)
-        self.threshold.setValue(int(self.treeItem.config.threshold * 1000))
-        self.thresholdVal.setText(str(round(self.treeItem.config.threshold, 3))+" Hz")
+        self.speedThreshold.setValue(int(self.treeItem.config.speedThreshold * 1000))
+        self.speedThresholdVal.setText(str(round(self.treeItem.config.speedThreshold, 3))+" Hz")
         self.buttonOut.setCurrentIndex(self.treeItem.config.buttonOut)
         self.show()
 
@@ -776,24 +777,24 @@ class InputMappingEncoderAsJoystick(QWidget):
         self.layout.addWidget(self.binaryBasedLabel, 0, 0, Qt.AlignRight)
 
         self.binaryBased = QComboBox(self)
-        self.binaryBased.addItems(binary_baseds)
+        self.binaryBased.addItems(ENCODER_FUNCTION_0)
         self.binaryBased.currentIndexChanged.connect(self.changeBinaryBased)
         self.layout.addWidget(self.binaryBased, 0, 1)
 
-        self.speed_basedLabel = QLabel("Encoder Functionality")
-        self.layout.addWidget(self.speed_basedLabel, 1, 0, Qt.AlignRight)
+        self.speedBasedLabel = QLabel("Encoder Functionality")
+        self.layout.addWidget(self.speedBasedLabel, 1, 0, Qt.AlignRight)
 
-        self.speed_based = QComboBox(self)
-        self.speed_based.addItems(speed_baseds)
-        self.speed_based.currentIndexChanged.connect(self.changeSpeedBased)
-        self.layout.addWidget(self.speed_based, 1, 1)
+        self.speedBased = QComboBox(self)
+        self.speedBased.addItems(ENCODER_FUNCTION_0)
+        self.speedBased.currentIndexChanged.connect(self.changeSpeedBased)
+        self.layout.addWidget(self.speedBased, 1, 1)
 
         self.ccwLabel = QLabel("Direction")
         self.layout.addWidget(self.ccwLabel, 2, 0, Qt.AlignRight)
 
         self.ccw = QComboBox(self)
-        self.ccw.addItems(directions)
-        self.ccw.currentIndexChanged.connect(self.change_ccw)
+        self.ccw.addItems(ENCODER_DIRECTIONS)
+        self.ccw.currentIndexChanged.connect(self.changeCcw)
         self.layout.addWidget(self.ccw, 2, 1)
 
         self.invertLabel = QLabel("Invert Direction")
@@ -813,9 +814,9 @@ class InputMappingEncoderAsJoystick(QWidget):
         self.speedThreshold.setOrientation(Qt.Horizontal)
         self.layout.addWidget(self.speedThreshold, 4, 1)
 
-        self.thresholdVal = QLabel("")
-        self.thresholdVal.setMinimumWidth(50)
-        self.layout.addWidget(self.thresholdVal, 4, 2, Qt.AlignLeft)
+        self.speedThresholdVal = QLabel("")
+        self.speedThresholdVal.setMinimumWidth(50)
+        self.layout.addWidget(self.speedThresholdVal, 4, 2, Qt.AlignLeft)
 
         self.linearMiddleLabel = QLabel("Linear Middle")
         self.layout.addWidget(self.linearMiddleLabel, 5, 0, Qt.AlignRight)
@@ -827,9 +828,9 @@ class InputMappingEncoderAsJoystick(QWidget):
         self.linearMiddle.setOrientation(Qt.Horizontal)
         self.layout.addWidget(self.linearMiddle, 5, 1)
 
-        self.lienarMiddleVal = QLabel("")
-        self.lienarMiddleVal.setMinimumWidth(50)
-        self.layout.addWidget(self.lienarMiddleVal, 5, 2, Qt.AlignLeft)
+        self.linearMiddleVal = QLabel("")
+        self.linearMiddleVal.setMinimumWidth(50)
+        self.layout.addWidget(self.linearMiddleVal, 5, 2, Qt.AlignLeft)
 
         self.linearDeadzoneLabel = QLabel("Linear Deadzone")
         self.layout.addWidget(self.linearDeadzoneLabel, 6, 0, Qt.AlignRight)
@@ -870,18 +871,18 @@ class InputMappingEncoderAsJoystick(QWidget):
         self.layout.addWidget(self.posNeg, 9, 1)
 
     def changeBinaryBased(self, index):
-        self.treeItem.config.binary_based = index
-        if self.treeItem.config.binary_based:
+        self.treeItem.config.binaryBased = index
+        if self.treeItem.config.binaryBased:
             self.ccw.setEnabled(True)
-            self.speed_based.setEnabled(True)
-            self.threshold.setEnabled(True)
-            self.lienarMiddle.setEnabled(False)
+            self.speedBased.setEnabled(True)
+            self.speedThreshold.setEnabled(True)
+            self.linearMiddle.setEnabled(False)
             self.linearDeadzone.setEnabled(False)
         else:
             self.ccw.setEnabled(False)
-            self.speed_based.setEnabled(False)
-            self.threshold.setEnabled(False)
-            self.lienarMiddle.setEnabled(True)
+            self.speedBased.setEnabled(False)
+            self.speedThreshold.setEnabled(False)
+            self.linearMiddle.setEnabled(True)
             self.linearDeadzone.setEnabled(True)
         self.treeItem.updateText()
 
@@ -904,9 +905,9 @@ class InputMappingEncoderAsJoystick(QWidget):
         self.treeItem.updateText()
 
     def changeLinearMiddle(self, arg__1):
-        self.treeItem.config.lienarMiddle = float(arg__1) / 1000.0
-        self.threshold.setValue(int(self.treeItem.config.lienarMiddle * 1000))
-        self.thresholdVal.setText(str(round(self.treeItem.config.lienarMiddle, 3)))
+        self.treeItem.config.linearMiddle = float(arg__1) / 1000.0
+        self.threshold.setValue(int(self.treeItem.config.linearMiddle * 1000))
+        self.thresholdVal.setText(str(round(self.treeItem.config.linearMiddle, 3)))
         self.treeItem.updateText()
 
     def changeLinearDeadzone(self, arg__1):
@@ -930,7 +931,7 @@ class InputMappingEncoderAsJoystick(QWidget):
     def showMapping(self, treeItem):
         self.treeItem = treeItem
         self.binaryBased.setCurrentIndex(self.treeItem.config.binaryBased)
-        self.chnageBinaryBased(self.treeItem.config.binaryBased)
+        self.changeBinaryBased(self.treeItem.config.binaryBased)
         self.speedBased.setCurrentIndex(self.treeItem.config.speedBased)
         self.ccw.setCurrentIndex(self.treeItem.config.ccw)
         if self.treeItem.config.invert:
@@ -939,8 +940,8 @@ class InputMappingEncoderAsJoystick(QWidget):
             self.invert.setCheckState(Qt.Unchecked)
         self.speedThreshold.setValue(int(self.treeItem.config.speedThreshold * 1000))
         self.speedThresholdVal.setText(str(round(self.treeItem.config.speedThreshold, 3))+" Hz")
-        self.lienarMiddle.setValue(int(self.treeItem.config.lienarMiddle * 1000))
-        self.lienarMiddleVal.setText(str(round(self.treeItem.config.lienarMiddle, 3)))
+        self.linearMiddle.setValue(int(self.treeItem.config.linearMiddle * 1000))
+        self.linearMiddleVal.setText(str(round(self.treeItem.config.linearMiddle, 3)))
         self.linearDeadzone.setValue(int(self.treeItem.config.linearDeadzone * 1000))
         self.linearDeadzoneVal.setText(str(round(self.treeItem.config.linearDeadzone, 3)))
         self.joystickOut.setCurrentIndex(self.treeItem.config.joystickOut)

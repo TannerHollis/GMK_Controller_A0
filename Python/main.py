@@ -1,7 +1,7 @@
-import sys
+import sys, copy
 #from PySide6 import QtGui, QtQuick
 from PySide6.QtWidgets import *
-from PySide6.QtGui import QGuiApplication, QAction, QPixmap, QPalette, QPainter, QColor
+from PySide6.QtGui import QGuiApplication, QAction, QPixmap, QPalette, QPainter, QColor, QIcon
 from PySide6.QtCore import QTimer, Slot, Qt, QCoreApplication, QSize
 from InputMappingGUIClasses import *
 from SerialClasses import *
@@ -9,12 +9,16 @@ from pathlib import Path
 
 QSS_FILE = "app_style.qss"
 QML_FILE = "app.qml"
-CONTROLLER_VIEW_TOP_FILE = image_folder = Path.cwd().joinpath("images").joinpath("controller_back.png").as_posix()
-CONTROLLER_VIEW_BOTTOM_FILE = image_folder = Path.cwd().joinpath("images").joinpath("controller_joystick.png").as_posix()
+ICON_IMAGE_FILE = image_folder = Path.cwd().joinpath("images").joinpath("icon.png").as_posix()
+ICON_ERROR_IMAGE_FILE = image_folder = Path.cwd().joinpath("images").joinpath("icon_error.png").as_posix()
 BACKGROUND_IMAGE_FILE = image_folder = Path.cwd().joinpath("images").joinpath("background.png").as_posix()
+CONTROLLER_VIEW_TOP_FILE = image_folder = Path.cwd().joinpath("images").joinpath("controller_back.png").as_posix()
+BUTTON_IMAGE_FILES = [Path.cwd().joinpath("images").joinpath("button_{}.png".format(i)).as_posix() for i in range(10)]
+CONTROLLER_VIEW_BOTTOM_FILE = image_folder = Path.cwd().joinpath("images").joinpath("controller_joystick.png").as_posix()
 CONFIG_FOLDER = cfg_dir = Path.cwd().joinpath("configs").as_posix()
 DEFAULT_CFG_FILE = Path.cwd().joinpath("configs").joinpath("{}.cfg".format(DEFAULT_CFG_FILE)).as_posix()
 DEVICE_PING_INTERVAL = 5000 #ms
+STATUS_INTERVAL = 2000 #ms
 
 class MainWindow(QMainWindow):
     def __init__(self, app, serialController):
@@ -25,11 +29,14 @@ class MainWindow(QMainWindow):
         self.config = ControllerConfiguration.fromFile(DEFAULT_CFG_FILE)
         self.initUI()
         self.setWindowTitle("GMK Controller Configuration Tool")
+        self.setWindowIcon(QIcon(ICON_IMAGE_FILE))
 
     def initUI(self):
         self.menubar = self.menuBar()
         self.fileMenu = FileMenu(self)
         self.menubar.addMenu(self.fileMenu)
+
+        self.setStatusBar(StatusBar(self.config))
         
         self.centralWidget = QWidget(self)
         self.layout = QHBoxLayout(self.centralWidget)
@@ -49,7 +56,8 @@ class MainWindow(QMainWindow):
         self.background = QPixmap(BACKGROUND_IMAGE_FILE).scaled(self.width(), self.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.painter = QPainter()
         self.painter.begin(self)
-        self.painter.setOpacity(0.15)
+        self.painter.fillRect(0, 0, self.width(), self.height(), QColor(0, 0, 0, 32))
+        self.painter.setOpacity(0.35)
         self.painter.drawPixmap((self.width() - self.background.width())/2, (self.height() - self.background.height())/2, self.background)
         self.painter.end()
 
@@ -77,6 +85,32 @@ class MainWindow(QMainWindow):
             ErrorMessageBox("Error Opening File", e, QMessageBox.Ok)
             return
 
+    def new(self):
+        print("New Configuration")
+
+class StatusBar(QStatusBar):
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.initUI()
+        self.timer = QTimer(self)
+        self.timer.setInterval(STATUS_INTERVAL)
+        self.timer.timeout.connect(self.updateStatus)
+        self.timer.start()
+
+    def initUI(self):
+        self.updateStatus()
+
+    def updateStatus(self):
+        if len(self.config.configurations) > 0:
+            configSize = self.config.getConfigSize()
+            text = "Configuration Utilization: {} / {} ({:0.2f}%)".format(configSize, CONFIGURATION_SIZE, configSize * 100 / CONFIGURATION_SIZE)
+            if configSize > 2048:
+                text += "\t Error: Configuration will not fit."
+            self.showMessage(text)
+        else:
+            self.showMessage("No Configurations found.")
+
 class FileMenu(QMenu):
     def __init__(self, parent):
         super().__init__(parent)
@@ -87,6 +121,7 @@ class FileMenu(QMenu):
     def initUI(self):
         self.newAction = QAction("New", self)
         self.newAction.setShortcut("Ctrl+N")
+        self.newAction.triggered.connect(self.parent.new)
         self.addAction(self.newAction)
 
         self.openAction = QAction("Open...", self)
@@ -108,6 +143,7 @@ class ErrorMessageBox(QMessageBox):
     def __init__(self, text, text_detailed, buttons):
         super().__init__()
         self.setWindowTitle("Error")
+        self.setWindowIcon(QIcon(ICON_ERROR_IMAGE_FILE))
         self.setText(text)
         self.setDetailedText(str(text_detailed))
         self.setStandardButtons(buttons)
@@ -126,8 +162,8 @@ class ControllerView(QWidget):
         self.viewTop = ControllerTopView(self)
         self.viewBottom = ControllerBottomView(self)
         
-        self.layout.addWidget(self.view_top)
-        self.layout.addWidget(self.view_bottom)
+        self.layout.addWidget(self.viewTop)
+        self.layout.addWidget(self.viewBottom)
 
     def showEvent(self, event):
         self.resizeEvent(None)
@@ -145,7 +181,15 @@ class ControllerTopView(QWidget):
         self.painter.begin(self)
         self.painter.setOpacity(1.0)
         self.painter.drawPixmap((self.width() - self.image.width())/2, (self.height() - self.image.height())/2, self.image)
+
+        for img in BUTTON_IMAGE_FILES:
+            buttonImg = QPixmap(img).scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.painter.drawPixmap((self.width() - self.image.width())/2, (self.height() - self.image.height())/2, buttonImg)
+
         self.painter.end()
+
+    def moveEvent(self, event):
+        print(event)
 
 class ControllerBottomView(QWidget):
     def __init__(self, parent):
@@ -175,10 +219,10 @@ class InputMappingColumn(QWidget):
         self.layout = QVBoxLayout(self)
 
         self.inputMapping = QGroupBox(self)
-        self.inputMapping.setMinimumHeight(400)
-        self.inputMapping.setMaximumHeight(500)
+        #self.inputMapping.setMinimumHeight(400)
+        #self.inputMapping.setMaximumHeight(500)
         self.inputMapping.setTitle("Configuration Mapping")
-        self.layout.addWidget(self.inputMapping, alignment=Qt.AlignTop)
+        self.layout.addWidget(self.inputMapping, alignment=Qt.AlignBottom)
 
         self.inputMappingLayout = QVBoxLayout(self.inputMapping)
         self.populateInputMappingList()
@@ -208,12 +252,12 @@ class InputMappingColumn(QWidget):
             self.inputMappingLayout.addWidget(mapping)
 
     def changeInputMappingUI(self, item):
-        self.inputMappingList[self.currentMapping+1].close_mapping()
+        self.inputMappingList[self.currentMapping+1].closeMapping()
         if item:
             self.currentMapping = item.config.type
         else:
             self.currentMapping = -1
-        self.inputMappingList[self.currentMapping+1].show_mapping(item)
+        self.inputMappingList[self.currentMapping+1].showMapping(item)
 
 class DeviceConnectionEditor(QWidget):
     def __init__(self, parent):
@@ -290,54 +334,56 @@ class MappingList(QTreeWidget):
         self.changeInputMappingUI = changeInputMappingUI
 
     def initUI(self):
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setDragDropMode(self.InternalMove)
         self.setColumnCount(2)
         self.setHeaderLabels(["Configurations", "Output Mapping"])
         self.setColumnWidth(0, 160)
         self.setColumnWidth(1, 100)
         self.root = self.invisibleRootItem()
-        self.button_configs = TreeItem(self, "Button Configurations", None)
-        self.joystick_configs = TreeItem(self, "Joystick Configurations", None)
-        self.encoder_configs = TreeItem(self, "Encoder Configurations", None)
-        self.gyro_configs = TreeItem(self, "Gyro Configurations", None)
+        self.buttonConfigs = HeaderItem(self, "Button Configurations")
+        self.joystickConfigs = HeaderItem(self, "Joystick Configurations")
+        self.encoderConfigs = HeaderItem(self, "Encoder Configurations")
+        self.gyroConfigs = HeaderItem(self, "Gyro Configurations")
 
-        self.root.addChild(self.button_configs)
-        self.root.addChild(self.joystick_configs)
-        self.root.addChild(self.encoder_configs)
-        self.root.addChild(self.gyro_configs)
+        self.root.addChild(self.buttonConfigs)
+        self.root.addChild(self.joystickConfigs)
+        self.root.addChild(self.encoderConfigs)
+        self.root.addChild(self.gyroConfigs)
         self.populateTree(self.parent.config)
 
     def populateTree(self, config):
         if config:
             configs = config.configurations
-            self.clearList(self.button_configs)
-            self.clearList(self.joystick_configs)
-            self.clearList(self.encoder_configs)
-            self.clearList(self.gyro_configs)
-            button_configs = [config for config in configs if config.input_type == "button"]
-            joystick_configs = [config for config in configs if config.input_type == "joystick"]
-            encoder_configs = [config for config in configs if config.input_type == "encoder"]
-            gyro_configs = [config for config in configs if config.input_type == "gyro"]
-            self.populateTreeItems(self.button_configs, button_configs)
-            self.populateTreeItems(self.joystick_configs, joystick_configs)
-            self.populateTreeItems(self.encoder_configs, encoder_configs)
-            self.populateTreeItems(self.gyro_configs, gyro_configs)
+            self.clearList(self.buttonConfigs)
+            self.clearList(self.joystickConfigs)
+            self.clearList(self.encoderConfigs)
+            self.clearList(self.gyroConfigs)
+            buttonConfigs = [config for config in configs if config.inputType == "button"]
+            joystickConfigs = [config for config in configs if config.inputType == "joystick"]
+            encoderConfigs = [config for config in configs if config.inputType == "encoder"]
+            gyroConfigs = [config for config in configs if config.inputType == "gyro"]
+            self.populateTreeItems(self.buttonConfigs, buttonConfigs)
+            self.populateTreeItems(self.joystickConfigs, joystickConfigs)
+            self.populateTreeItems(self.encoderConfigs, encoderConfigs)
+            self.populateTreeItems(self.gyroConfigs, gyroConfigs)
         else:
             print("No configs found.")
 
-    def populateTreeItems(self, tree_header, configs):
+    def populateTreeItems(self, treeHeader, configs):
         if configs:
             for i in range(len(configs)):
-                item_text = "{} as {}".format(configs[i].input_type.capitalize(), configs[i].output_type.capitalize())
-                TreeItem(tree_header, item_text, configs[i])
+                
+                TreeItem(treeHeader, configs[i])
         else:
-            print("No configs found for: {}".format(tree_header.text(0)))
+            print("No configs found for: {}".format(treeHeader.text(0)))
 
-    def removeItem(self, header_item, item):
-        header_item.removeChild(item)
+    def removeItem(self, headerItem, item):
+        headerItem.removeChild(item)
 
-    def addItem(self, header_item, item):
-        header_item.addChild(item)
-    
+    def addItem(self, headerItem, item):
+        headerItem.addChild(item)
+
     def clearList(self, list_header):
         for i in reversed(range(list_header.childCount())):
             list_header.removeChild(list_header.child(i))
@@ -346,77 +392,200 @@ class MappingList(QTreeWidget):
         QTreeWidget.mousePressEvent(self, event)
         pos = event.position()
         item_clicked = self.itemAt(pos.toPoint())
-        is_header = item_clicked in [self.button_configs, self.joystick_configs, self.encoder_configs, self.gyro_configs]
+        is_header = item_clicked in [self.buttonConfigs, self.joystickConfigs, self.encoderConfigs, self.gyroConfigs]
         if item_clicked:
             if event.button() == Qt.RightButton:
                 if is_header:
                     self.headerRightClicked(item_clicked, event.globalPosition().toPoint())
                 else:
                     self.itemRightClicked(item_clicked, event.globalPosition().toPoint())
-            if event.button() == Qt.LeftButton:
+
+    def mouseDoubleClickEvent(self, event):
+        pos = event.position()
+        item_clicked = self.itemAt(pos.toPoint())
+        is_header = item_clicked in [self.buttonConfigs, self.joystickConfigs, self.encoderConfigs, self.gyroConfigs]
+        if event.button() == Qt.LeftButton:
                 if not is_header:
                     self.itemLeftClicked(item_clicked, event.globalPosition().toPoint())
 
+    def dropEvent(self, event):
+        itemSource = event.source().currentItem()
+        itemDest = self.itemAt(event.pos())
+        if(itemSource.parent == itemDest.parent and itemSource is not itemDest):
+            event.setDropAction(Qt.MoveAction)
+            itemSourceIndex = itemSource.parent.indexOfChild(itemSource)
+            itemDestIndex = itemDest.parent.indexOfChild(itemDest)
+            print(itemSourceIndex, itemDestIndex)
+            itemSource.parent.takeChild(itemSourceIndex)
+            itemDest.parent.insertChild(itemDestIndex, itemSource)
+
     def itemRightClicked(self, item, pos):
-        ItemRightClickMenu(item, self.parent.config, pos, self.changeInputMappingUI, self.removeItem)
+        ItemRightClickMenu(item, self.parent.config, pos, self.changeInputMappingUI, self.addItem, self.removeItem)
 
     def headerRightClicked(self, header, pos):
-        HeaderRightClickMenu(header, self.parent.config, pos, self.populateTree)
+        HeaderRightClickMenu(header, self.parent.config, pos, self.addItem)
 
     def itemLeftClicked(self, item, pos):
         self.changeInputMappingUI(item)
 
 class TreeItem(QTreeWidgetItem):
-    def __init__(self, parent, text, config):
+    def __init__(self, parent, config):
         super().__init__(parent)
         self.parent = parent
-        self.config_text = text
         self.config = config
         self.updateText()
 
     def updateText(self):
-        self.setText(0, self.config_text)
+        itemText = "{} as {}".format(self.config.inputType, self.config.outputType).title()
+        self.setText(0, itemText)
         if self.config:
-            self.setText(1, self.config.output_mapping().title())
+            self.setText(1, self.config.outputMapping().title())
+
+class HeaderItem(QTreeWidgetItem):
+    def __init__(self, parent, text):
+        super().__init__(parent)
+        self.parent = parent
+        self.setText(0, text)
 
 class ItemRightClickMenu(QMenu):
-    def __init__(self, item, config, pos, edit_func, delete_func):
+    def __init__(self, item, config, pos, editFunc, dupeFunc, deleteFunc):
         super().__init__()
         self.item = item
         self.config = config
-        self.edit_func = edit_func
-        self.delete_func = delete_func
-        self.edit_action = QAction("Edit", self)
-        self.edit_action.triggered.connect(self.edit_config)
-        self.addAction(self.edit_action)
-        self.delete_action = QAction("Delete", self)
-        self.delete_action.triggered.connect(self.delete_config)
-        self.addAction(self.delete_action)
+        self.editFunc = editFunc
+        self.dupeFunc = dupeFunc
+        self.deleteFunc = deleteFunc
+        self.editAction = QAction("Edit", self)
+        self.editAction.triggered.connect(self.editConfig)
+        self.addAction(self.editAction)
+        self.dupeAction = QAction("Duplicate {} : {}".format(self.item.text(0), self.item.text(1)), self)
+        self.dupeAction.triggered.connect(self.duplicateConfig)
+        self.addAction(self.dupeAction)
+        self.deleteAction = QAction("Delete", self)
+        self.deleteAction.triggered.connect(self.deleteConfig)
+        self.addAction(self.deleteAction)
         self.exec(pos)
 
-    def edit_config(self):
-        self.edit_func(self.item)
+    def editConfig(self):
+        self.editFunc(self.item)
 
-    def delete_config(self):
+    def duplicateConfig(self):
+        newConfig = copy.copy(self.item.config)
+        newItem = TreeItem(self.item.parent, newConfig)
+        self.config.configurations.append(newConfig)
+        self.dupeFunc(self.item.parent, self.item)
+
+    def deleteConfig(self):
         self.config.configurations.pop(self.config.configurations.index(self.item.config))
-        self.delete_func(self.item.parent, self.item)
+        self.deleteFunc(self.item.parent, self.item)
 
 class HeaderRightClickMenu(QMenu):
-    def __init__(self, header, config, pos, populateFunc):
+    def __init__(self, header, config, pos, newConfigFunc):
         super().__init__()
         self.header = header
         self.config = config
-        self.new_action = QAction("New", self)
-        self.new_action.triggered.connect(self.new_config)
-        self.addAction(self.new_action)
+        self.newConfigFunc = newConfigFunc
+
+        self.newMenu = QMenu("New", self)
+        self.newButtonConfigAction = QAction("Button Configuration", self.newMenu)
+        self.newJoystickConfigAction = QAction("Joystick Configuration", self.newMenu)
+        self.newEncoderConfigAction = QAction("Encoder Configuration", self.newMenu)
+        self.newGyroConfigAction = QAction("Gyro Configuration", self.newMenu)
+        
+        self.newButtonConfigAction.triggered.connect(self.newButtonConfig)
+        self.newJoystickConfigAction.triggered.connect(self.newJoystickConfig)
+        self.newEncoderConfigAction.triggered.connect(self.newEncoderConfg)
+        self.newGyroConfigAction.triggered.connect(self.newGyroConfig)
+        
+        self.newMenu.addAction(self.newButtonConfigAction)
+        self.newMenu.addAction(self.newJoystickConfigAction)
+        self.newMenu.addAction(self.newEncoderConfigAction)
+        self.newMenu.addAction(self.newGyroConfigAction)
+
+        self.addMenu(self.newMenu)
         self.exec(pos)
 
-    def new_config(self):
-        print(self.current_config)
+    def newButtonConfig(self):
+        NewConfigWizard(self.header.parent, self.config, self.newConfigFunc, -1)
 
-class NewConfigDialogBox(QDialog):
-    def __init__(self, text):
-        print(text)
+    def newJoystickConfig(self):
+        NewConfigWizard(self.header.parent, self.config, self.newConfigFunc, 1)
+
+    def newEncoderConfg(self):
+        NewConfigWizard(self.header.parent, self.config, self.newConfigFunc, 2)
+
+    def newGyroConfig(self):
+        NewConfigWizard(self.header.parent, self.config, self.newConfigFunc, 3)
+
+class NewConfigWizard(QWizard):
+    def __init__(self, config, mappingList, newConfigFunc, preSelectedOption):
+        super().__init__()
+        self.config = config
+        self.newConfigFunc = newConfigFunc
+        self.inputSelection = -1
+        self.addPage(NewConfigStartWizardPage(self, preSelectedOption))
+        self.addPage(NewConfigWizardPage(self))
+        self.exec()
+
+class NewConfigStartWizardPage(QWizardPage):
+    def __init__(self, parent, preSelectedOption):
+        super().__init__(parent)
+        self.parent = parent
+        self.setTitle("New Input Mapping")
+        self.setSubTitle("Select the input configuration to map.")
+        self.initUI(preSelectedOption)
+
+    def initUI(self, preSelectedOption):
+        self.layout = QVBoxLayout(self)
+
+        self.group = QGroupBox(self)
+        self.group.setTitle("Input Mapping")
+        self.groupLayout = QVBoxLayout(self.group)
+
+        self.buttonGroup = QButtonGroup(self)
+
+        self.button = QRadioButton("Button Mapping")
+        self.joystick = QRadioButton("Joystick Mapping")
+        self.encoder = QRadioButton("Encoder Mapping")
+        self.gyro = QRadioButton("Gyro Mapping")
+
+        self.buttonGroup.addButton(self.button)
+        self.buttonGroup.addButton(self.joystick)
+        self.buttonGroup.addButton(self.encoder)
+        self.buttonGroup.addButton(self.gyro)
+
+        if preSelectedOption > -1:
+            self.buttonGroup.buttons()[preSelectedOption].setChecked(True)
+
+        self.groupLayout.addWidget(self.button)
+        self.groupLayout.addWidget(self.joystick)
+        self.groupLayout.addWidget(self.encoder)
+        self.groupLayout.addWidget(self.gyro)
+
+        self.layout.addWidget(self.group)
+
+    def validatePage(self):
+        if self.buttonGroup.checkedButton():
+            return True
+        else:
+            return False
+
+class NewConfigWizardPage(QWizardPage):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.initUI()
+
+    def initUI(self):
+        self.layout = QVBoxLayout(self)
+        self.buttonBox = QComboBox(self)
+        self.buttonBox.addItems(["As Button", "As Joystick", "As Keyboard", "As Trigger"])
+        
+        self.layout.addWidget(self.buttonBox)
+
+    def showUI(self):
+        print()
+
 
 if __name__ == "__main__":
     #Initialize the serial controller
@@ -427,8 +596,8 @@ if __name__ == "__main__":
 
     #Import the application styling
     with open(QSS_FILE, "r") as f:
-        app_style = f.read()
-        app.setStyleSheet(app_style)
+        appStyle = f.read()
+        app.setStyleSheet(appStyle)
 
     #Initialize the main window
     main = MainWindow(app, serialController)

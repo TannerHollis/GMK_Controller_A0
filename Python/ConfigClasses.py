@@ -208,10 +208,23 @@ class ControllerOutput():
         string += "triggerR: {}\n".format(self.triggerR)
         return string
 
+class ControllerConfigurations():
+    def __init__(self, fileName):
+        self.fileName = fileName
+        self.controllerConfigurations = []
+    
+    def addControllerConfiguration(self, config):
+        self.controllerConfigurations.append(config)
+
+    def removeControllerConfiguration(self, config):
+        index = self.controllerConfigurations.find(config)
+        self.controllerConfigurations.pop(index)
+
+
 class ControllerConfiguration():
     def __init__(self, profileNumber, configName, LEDColors, LEDBrightness):
         self.profileNumber = profileNumber
-        self.config_name = configName
+        self.configName = configName
         self.LEDColors = LEDColors
         self.LEDColorsBytes = self.setLEDColors(LEDColors)
         self.LEDBrightness = LEDBrightness
@@ -245,27 +258,20 @@ class ControllerConfiguration():
     def printConfigToFile(self, filePath):
         #Write to file
         with open(filePath, "wb") as f:
-            print("Writing to file: {}.cfg".format(filePath))
-            f.write(bytes([self.profileNumber]))
-            f.write(self.getLEDColorsBytes())
-            f.write(bytes([self.LEDBrightness]))
-            f.write(self.configName[:CONFIG_NAME_LENGTH].ljust(CONFIG_NAME_LENGTH, chr(0)).encode(BYTE_ENCODING))
-            for config in self.configurations:
-                config_bytes = config.toBytes()
-                f.write(config_bytes)
-                f.write(bytes([0xff]))
+            print("Writing to file: {}".format(filePath))
+            f.write(self.toBytesFill(self.toBytes()))
 
         #Report file size
-        byte_cnt = os.path.getsize(filePath)
-        print("Total bytes used in configuration: {} of {}. ({:0.2f}%)".format(byte_cnt, CONFIGURATION_SIZE, 100 * byte_cnt / CONFIGURATION_SIZE))
+        byteCnt = len(self.toBytes())
+        print("Total bytes used in configuration: {} of {}. ({:0.2f}%)".format(byteCnt, CONFIGURATION_SIZE, 100 * byteCnt / CONFIGURATION_SIZE))
 
         #Write text file for array initialization
-        self.printConfigToTXTFile(path)
+        self.printConfigToTXTFile(filePath)
 
-    def printConfigToTXTFile(self, path):
+    def printConfigToTXTFile(self, filePath):
         #Check if folder exists
-        filePath_txt = os.path.join(path, self.configName + ".txt")
-        filePath_cfg = os.path.join(path, self.configName + ".cfg")
+        filePath_txt = os.path.splitext(filePath)[0] + ".txt"
+        filePath_cfg = filePath
 
         #Write to file
         with open(filePath_txt, "w") as f_txt:
@@ -279,11 +285,32 @@ class ControllerConfiguration():
         with open(filePath, "rb") as f:
             return ControllerConfiguration.fromBytes(f.read())
 
+    def toBytes(self):
+        bytesOut = b""
+        bytesOut += bytes([self.profileNumber])
+        bytesOut += self.getLEDColorsBytes()
+        bytesOut += bytes([self.LEDBrightness])
+        bytesOut += self.configName[:CONFIG_NAME_LENGTH].encode(BYTE_ENCODING).ljust(CONFIG_NAME_LENGTH, b" ")
+        for config in self.configurations:
+            configBytes = config.toBytes()
+            bytesOut += configBytes
+            bytesOut += bytes([0xff])
+
+        return bytesOut
+
+    def toBytesFill(self, bytesIn):
+        bytesIn += bytes([0])*(CONFIGURATION_SIZE - len(bytesIn))
+        return bytesIn
+       
+    def getConfigSize(self):
+        return len(self.toBytes())
+
     def fromBytes(bytesIn):
-        profileNumber = struct.unpack("<B", bytesIn[0:1])
+        (profileNumber,) = struct.unpack("<B", bytesIn[0:1])
         LEDColors = ControllerConfiguration.LEDBytesToColors(struct.unpack("<{}B".format(12), bytesIn[1:13]))
-        LEDBrightness = struct.unpack("<B", bytesIn[13:14])
-        configName = struct.unpack("<{}s".format(CONFIG_NAME_LENGTH), bytesIn[14:14+CONFIG_NAME_LENGTH])
+        (LEDBrightness,) = struct.unpack("<B", bytesIn[13:14])
+        (configName,) = struct.unpack("<{}s".format(CONFIG_NAME_LENGTH), bytesIn[14:14+CONFIG_NAME_LENGTH])
+        configName = configName.decode(BYTE_ENCODING)
         cc = ControllerConfiguration(profileNumber, configName, LEDColors, LEDBrightness)
         configStart = True
         configStartAddress = 0
@@ -412,7 +439,7 @@ class ButtonAsTrigger():
         return mapOutputTrigger(self.triggerOut)
 
 class JoystickAsButton():
-    def __init__(self, joystickIn=0, axisXY=0, invert=0, posNeg=0, threshold=0, buttonOut=0):
+    def __init__(self, joystickIn=0, axisXY=0, invert=0, posNeg=0, threshold=0.05, buttonOut=0):
         self.joystickIn = joystickIn
         self.axisXY = axisXY
         self.invert = invert
@@ -426,7 +453,7 @@ class JoystickAsButton():
 
     def toBytes(self):
         b0 = 0
-        b0 |= self.joystickLR << 0
+        b0 |= self.joystickIn << 0
         b0 |= self.axisXY << 1
         b0 |= self.invert << 2
         b0 |= self.posNeg << 3
@@ -435,17 +462,17 @@ class JoystickAsButton():
 
     def fromBytes(bytesIn):
         (t, b0, threshold, buttonOut) = struct.unpack("<BBfB", bytesIn)
-        joystickLR = (b0 >> 0) & 1
+        joystickIn = (b0 >> 0) & 1
         axisXY = (b0 >> 1) & 1
         invert = (b0 >> 2) & 1
         posNeg = (b0 >> 3) & 1
-        return JoystickAsButton(joystickLR, axisXY, invert, posNeg, threshold, buttonOut)
+        return JoystickAsButton(joystickIn, axisXY, invert, posNeg, threshold, buttonOut)
 
     def outputMapping(self):
         return mapOutputButton(self.buttonOut)
 
 class JoystickAsJoystick():
-    def __init__(self, joystickIn=0, invertX=0, invertY=0, joystickOut=0, deadzoneX=0, deadzoneY=0):
+    def __init__(self, joystickIn=0, invertX=0, invertY=0, joystickOut=0, deadzoneX=0.05, deadzoneY=0.05):
         self.joystickIn = joystickIn
         self.invertX = invertX
         self.invertY = invertY
@@ -478,7 +505,7 @@ class JoystickAsJoystick():
         return mapOutputJoystick(self.joystickOut)
 
 class JoystickAsKeyboard():
-    def __init__(self, joystickIn=0, axisXY=0, invert=0, posNeg=0, threshold=0, string=""):
+    def __init__(self, joystickIn=0, axisXY=0, invert=0, posNeg=0, threshold=0.75, string=""):
         self.joystickIn = joystickIn
         self.axisXY = axisXY
         self.invert = invert
@@ -511,7 +538,7 @@ class JoystickAsKeyboard():
         return "Keyboard"
 
 class JoystickAsTrigger():
-    def __init__(self, joystickIn=0, axisXY=0, invert=0, posNeg=0, threshold=0, triggerOut=0):
+    def __init__(self, joystickIn=0, axisXY=0, invert=0, posNeg=0, threshold=0.75, triggerOut=0):
         self.joystickIn = joystickIn
         self.axisXY = axisXY
         self.invert = invert
@@ -546,7 +573,7 @@ class JoystickAsTrigger():
         return mapOutputTrigger(self.triggerOut)
 
 class EncoderAsButton():
-    def __init__(self, speedBased=0, ccw=0, invert=0, speedThreshold=0, buttonOut=0):
+    def __init__(self, speedBased=0, ccw=0, invert=0, speedThreshold=5, buttonOut=0):
         self.speedBased = speedBased
         self.ccw = ccw
         self.invert = invert
@@ -576,7 +603,7 @@ class EncoderAsButton():
         return mapOutputButton(self.buttonOut)
 
 class EncoderAsJoystick():
-    def __init__(self, binaryBased=0, speedBased=0, ccw=0, invert=0, speedThreshold=0, linearMiddle=0, linearDeadzone=0, joystickOut=0, axisXY=0, posNeg=0):
+    def __init__(self, binaryBased=0, speedBased=0, ccw=0, invert=0, speedThreshold=5, linearMiddle=0.5, linearDeadzone=0.05, joystickOut=0, axisXY=0, posNeg=0):
         self.binaryBased = binaryBased
         self.speedBased = speedBased
         self.ccw = ccw
@@ -620,7 +647,7 @@ class EncoderAsJoystick():
         return mapOutputJoystick(self.joystickOut, self.axisXY, self.posNeg)
 
 class EncoderAsKeyboard():
-    def __init__(self, speedBased=0, ccw=0, invert=0, speedThreshold=0, string=""):
+    def __init__(self, speedBased=0, ccw=0, invert=0, speedThreshold=5, string=""):
         self.speedBased = speedBased
         self.ccw = ccw
         self.invert = invert
@@ -650,7 +677,7 @@ class EncoderAsKeyboard():
         return "Keyboard"
 
 class EncoderAsTrigger():
-    def __init__(self, binaryBased=0, speedBased=0, ccw=0, invert=0, speedThreshold=0, linearMiddle=0, linearDeadzone=0, triggerOut=0):
+    def __init__(self, binaryBased=0, speedBased=0, ccw=0, invert=0, speedThreshold=5, linearMiddle=0.5, linearDeadzone=0.05, triggerOut=0):
         self.speedBased = speedBased
         self.ccw = ccw
         self.invert = invert
@@ -725,7 +752,7 @@ def test():
         print("Created folder : ", configDir)
     filePath = os.path.join(configDir, config.configName + ".cfg")
 
-    config.printConfigToFile("configs/")
+    config.printConfigToFile(filePath)
     return config
 
 if __name__ == "__main__":
