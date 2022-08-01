@@ -27,7 +27,7 @@
  * @{ */
 
 /** @brief Must be set according to the highest number of interfaces for a given USB Device. */
-#define USBD_MAX_IF_COUNT           2
+#define USBD_MAX_IF_COUNT           4
 
 /** @brief Must be set higher than:
  * @arg the length of the entire USB device configuration descriptor

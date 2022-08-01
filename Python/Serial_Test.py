@@ -2,7 +2,7 @@ import serial
 import pygame
 import numpy
 from gui_classes import *
-from config_classes import *
+from ConfigClasses import *
 import time
 
 VERSION_STR_LENGTH = 24

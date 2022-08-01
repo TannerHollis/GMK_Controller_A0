@@ -22,6 +22,7 @@
   */
 #include <usb_device.h>
 #include <usbd_cdc.h>
+#include <usbd_hid.h>
 
 /** @brief USB device configuration */
 const USBD_DescriptionType hdev_cfg = {
@@ -53,16 +54,22 @@ USBD_HandleType hUsbDevice, *const UsbDevice = &hUsbDevice;
 
 extern USBD_CDC_IfHandleType *const console_if;
 
+extern USBD_HID_IfHandleType *const gmk_controller_if;
+
 void UsbDevice_Init(void)
 {
-    /* All fields of Config have to be properly set up */
+    /* Configure the CDC controller */
     console_if->Config.InEpNum  = 0x81;
     console_if->Config.OutEpNum = 0x01;
     console_if->Config.NotEpNum = 0x82;
     console_if->LineCoding = lc;
 
+    /* Configure HID controller */
+    gmk_controller_if->Config.InEpNum = 0x83;
+
     /* Mount the interfaces to the device */
     USBD_CDC_MountInterface(console_if, UsbDevice);
+    USBD_HID_MountInterface(gmk_controller_if, UsbDevice);
 
     /* Initialize the device */
     USBD_Init(UsbDevice, dev_cfg);

@@ -524,7 +524,6 @@ class NewConfigWizard(QWizard):
         self.newConfigFunc = newConfigFunc
         self.inputSelection = -1
         self.addPage(NewConfigStartWizardPage(self, preSelectedOption))
-        self.addPage(NewConfigWizardPage(self))
         self.exec()
 
 class NewConfigStartWizardPage(QWizardPage):
@@ -564,28 +563,21 @@ class NewConfigStartWizardPage(QWizardPage):
 
         self.layout.addWidget(self.group)
 
+        self.buttonBox = QComboBox(self)
+        self.buttonBox.addItems(["As Button", "As Joystick", "As Keyboard", "As Trigger"])
+        self.buttonBox.currentIndexChanged.connect(self.updateText)
+        self.layout.addWidget(self.buttonBox)
+
+        self.group = QGroupBox("Description")
+
+    def updateText(self):
+        print(self.buttonBox.currentIndex())
+
     def validatePage(self):
         if self.buttonGroup.checkedButton():
             return True
         else:
             return False
-
-class NewConfigWizardPage(QWizardPage):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-        self.initUI()
-
-    def initUI(self):
-        self.layout = QVBoxLayout(self)
-        self.buttonBox = QComboBox(self)
-        self.buttonBox.addItems(["As Button", "As Joystick", "As Keyboard", "As Trigger"])
-        
-        self.layout.addWidget(self.buttonBox)
-
-    def showUI(self):
-        print()
-
 
 if __name__ == "__main__":
     #Initialize the serial controller

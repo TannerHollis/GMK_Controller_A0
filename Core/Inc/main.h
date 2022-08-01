@@ -132,6 +132,8 @@ void write_next_keyboard_event_state(uint8_t *string_address, uint8_t string_len
 #define EVENT_BUFFER_LENGTH 128
 #define KEYBOARD_EVENT_BUFFER_LENGTH 128
 
+
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

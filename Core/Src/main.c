@@ -114,6 +114,8 @@ static void MX_ADC1_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
+extern void Send_HID_Data(Controller_HandleTypeDef* controller);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -204,8 +206,6 @@ int main(void)
   //Initialize controller configuration with first profile
   controller_config = Controller_Config_Init(controller_config_profile, &led_controller);
 
-  uint16_t function_time = 0;
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -218,18 +218,16 @@ int main(void)
 
   while (1)
   {
+	LED_Controller_Update(&led_controller); //Update LED Color
 	switch(event_state[event_index_read]){
 		case EVENT_WAIT:
 			UpdateAllButtons(); //Read Button States
-			function_time = htim4.Instance->CNT;
-			LED_Controller_Update(&led_controller); //Update LED Color
-			function_time = htim4.Instance->CNT - function_time;
 			break;
 		case TIM_EVENT_1:
 			HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4); //Trigger Joystick ADC read
 			break;
 		case TIM_EVENT_2:
-			Serial_Comm_CheckMessages(); //Read incoming messages
+			RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
 			break;
 		case TIM_EVENT_3:
 			Controller_Config_MapControllerData(&controller_config, &controller); //Map Controller Configuration Data
@@ -239,7 +237,8 @@ int main(void)
 				_write(0, &controller, sizeof(controller)); //Write to USB
 				controller_cdc_output_flag = 0;
 			}
-			RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
+			Serial_Comm_CheckMessages(); //Read incoming messages
+			write_next_event_state(USB_EVENT_HID_GAMEPAD_UPDATE);
 			break;
 		case ADC_EVENT_UPDATE:
 			Joystick_Update(&(joysticks[0]));
@@ -275,7 +274,7 @@ int main(void)
 			}
 			break;
 		case USB_EVENT_HID_GAMEPAD_UPDATE:
-			// TODO: Implement a Send Gamepad Event via HID
+			Send_HID_Data(&controller);
 			break;
 		case SPI_EVENT_LED_UPDATE:
 			LED_Controller_Latch(&led_controller, GPIO_PIN_SET); //Latch new led output
