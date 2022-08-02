@@ -17,8 +17,7 @@
 #include <controller_config.h>
 
 __attribute__((__section__(".user_data"))) const uint8_t controller_configs[CONTROLLER_CONFIG_PROFILES][CONTROLLER_CONFIG_LENGTH] = { 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 50, 0, 50, 32, 71, 77, 75, 32, 67, 111, 110, 116, 114, 111, 108, 108, 101, 114, 32, 45, 32, 68, 101, 102, 97, 117, 108, 116, 32, 67, 111, 110, 102, 105, 103, 117, 114, 97, 116, 105, 111, 110, 32, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 1, 1, 255, 0, 2, 2, 255, 0, 3, 3, 255, 0, 4, 4, 255, 0, 5, 5, 255, 0, 6, 7, 255, 0, 7, 7, 255, 0, 8, 10, 255, 0, 9, 11, 255, 0, 10, 12, 255, 0, 11, 13, 255, 3, 12, 0, 255, 3, 13, 1, 255, 5, 0, 205, 204, 76, 61, 205, 204, 76, 61, 255, 5, 9, 205, 204, 76, 61, 205, 204, 76, 61, 255, 8, 1, 0, 0, 128, 63, 10, 255, 8, 3, 0, 0, 128, 63, 11, 255, };
-uint8_t controller_config[CONTROLLER_CONFIG_LENGTH];
-uint8_t controller_config_address;
+static uint8_t controller_config_address;
 
 //Import Hardware TypeDefs
 extern ButtonSwitch_HandleTypeDef buttons[14];

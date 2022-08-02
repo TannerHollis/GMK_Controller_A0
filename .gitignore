@@ -52,17 +52,6 @@ Mkfile.old
 dkms.conf
 *.bin
 *.list
-Debug/GMK_Controller_A0.bin
-Debug/GMK_Controller_A0.list
-Debug/GMK_Controller_A0.bin
-Debug/GMK_Controller_A0.list
-*.bin
-.settings/language.settings.xml
-*.pyc
-.settings/language.settings.xml
-Debug/GMK_Controller_A0.bin
-Debug/GMK_Controller_A0.list
-*.list
-*.bin
-Debug/GMK_Controller_A0.bin
-Debug/GMK_Controller_A0.list
+
+#Ignore Debug folder
+Debug/

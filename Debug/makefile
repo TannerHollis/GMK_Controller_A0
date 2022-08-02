@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (9-2020-q2-update)
+# Toolchain: GNU Tools for STM32 (10.3-2021.10)
 ################################################################################
 
 -include ../makefile.init
@@ -55,14 +55,14 @@ BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ART
 EXECUTABLES += \
 GMK_Controller_A0.elf \
 
+MAP_FILES += \
+GMK_Controller_A0.map \
+
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
 GMK_Controller_A0.list \
-
-OBJCOPY_BIN += \
-GMK_Controller_A0.bin \
 
 
 # All Target
@@ -72,8 +72,8 @@ all: main-build
 main-build: GMK_Controller_A0.elf secondary-outputs
 
 # Tool invocations
-GMK_Controller_A0.elf: $(OBJS) $(USER_OBJS) C:\Users\thollis\Google\ Drive\Water_Valve_Sensor\GMK_Controller_A0\STM32F411CCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "GMK_Controller_A0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\thollis\Google Drive\Water_Valve_Sensor\GMK_Controller_A0\STM32F411CCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GMK_Controller_A0.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+GMK_Controller_A0.elf GMK_Controller_A0.map: $(OBJS) $(USER_OBJS) C:\Users\TannerGaming\STM32CubeIDE\workspace_1.3.0\GMK_Controller_A0\STM32F411CCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "GMK_Controller_A0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\TannerGaming\STM32CubeIDE\workspace_1.3.0\GMK_Controller_A0\STM32F411CCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GMK_Controller_A0.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -87,17 +87,12 @@ GMK_Controller_A0.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEP
 	@echo 'Finished building: $@'
 	@echo ' '
 
-GMK_Controller_A0.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "GMK_Controller_A0.bin"
-	@echo 'Finished building: $@'
-	@echo ' '
-
 # Other Targets
 clean:
-	-$(RM) GMK_Controller_A0.bin GMK_Controller_A0.elf GMK_Controller_A0.list default.size.stdout
+	-$(RM) GMK_Controller_A0.elf GMK_Controller_A0.list GMK_Controller_A0.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'
