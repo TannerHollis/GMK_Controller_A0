@@ -9,43 +9,43 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   2 .text         0000aae8  08000198  08000198  00010198  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  3 .rodata       000001fc  0800ac80  0800ac80  0001ac80  2**2
+  3 .rodata       000001ec  0800ac80  0800ac80  0001ac80  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  4 .ARM.extab    00000000  0800ae7c  0800ae7c  0003e000  2**0
+  4 .ARM.extab    00000000  0800ae6c  0800ae6c  0003e000  2**0
                   CONTENTS
-  5 .ARM          00000008  0800ae7c  0800ae7c  0001ae7c  2**2
+  5 .ARM          00000008  0800ae6c  0800ae6c  0001ae6c  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  6 .preinit_array 00000000  0800ae84  0800ae84  0003e000  2**0
+  6 .preinit_array 00000000  0800ae74  0800ae74  0003e000  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .init_array   00000004  0800ae84  0800ae84  0001ae84  2**2
+  7 .init_array   00000004  0800ae74  0800ae74  0001ae74  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  8 .fini_array   00000004  0800ae88  0800ae88  0001ae88  2**2
+  8 .fini_array   00000004  0800ae78  0800ae78  0001ae78  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .data         00000084  20000000  0800ae8c  00020000  2**2
+  9 .data         00000084  20000000  0800ae7c  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
- 10 .bss          00002350  20000084  0800af10  00020084  2**2
+ 10 .bss          00002350  20000084  0800af00  00020084  2**2
                   ALLOC
- 11 ._user_heap_stack 00000604  200023d4  0800af10  000223d4  2**0
+ 11 ._user_heap_stack 00000604  200023d4  0800af00  000223d4  2**0
                   ALLOC
  12 .ARM.attributes 00000030  00000000  00000000  0003e000  2**0
                   CONTENTS, READONLY
- 13 .debug_info   00040cd2  00000000  00000000  0003e030  2**0
+ 13 .debug_info   00040d02  00000000  00000000  0003e030  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_abbrev 00005dcf  00000000  00000000  0007ed02  2**0
+ 14 .debug_abbrev 00005dcf  00000000  00000000  0007ed32  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_aranges 00001640  00000000  00000000  00084ad8  2**3
+ 15 .debug_aranges 00001640  00000000  00000000  00084b08  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_ranges 00001458  00000000  00000000  00086118  2**3
+ 16 .debug_ranges 00001458  00000000  00000000  00086148  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_macro  0001c028  00000000  00000000  00087570  2**0
+ 17 .debug_macro  0001c028  00000000  00000000  000875a0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_line   0001f759  00000000  00000000  000a3598  2**0
+ 18 .debug_line   0001f759  00000000  00000000  000a35c8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_str    0009f960  00000000  00000000  000c2cf1  2**0
+ 19 .debug_str    0009f965  00000000  00000000  000c2d21  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .comment      00000050  00000000  00000000  00162651  2**0
+ 20 .comment      00000050  00000000  00000000  00162686  2**0
                   CONTENTS, READONLY
- 21 .debug_frame  00005a70  00000000  00000000  001626a4  2**2
+ 21 .debug_frame  00005a70  00000000  00000000  001626d8  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1220,7 +1220,7 @@ void HAL_USBD_Setup(void)
  80009fc:	46bd      	mov	sp, r7
  80009fe:	f85d 7b04 	ldr.w	r7, [sp], #4
  8000a02:	4770      	bx	lr
- 8000a04:	0800ad84 	.word	0x0800ad84
+ 8000a04:	0800ad74 	.word	0x0800ad74
  8000a08:	08000971 	.word	0x08000971
  8000a0c:	080009b9 	.word	0x080009b9
 
@@ -1241,7 +1241,7 @@ void OTG_FS_IRQHandler(void)
  8000a1e:	bf00      	nop
  8000a20:	bd80      	pop	{r7, pc}
  8000a22:	bf00      	nop
- 8000a24:	0800ad84 	.word	0x0800ad84
+ 8000a24:	0800ad74 	.word	0x0800ad74
 
 08000a28 <main>:
 /**
@@ -4484,11 +4484,11 @@ void UsbDevice_Init(void)
 }
  8001e74:	bf00      	nop
  8001e76:	bd80      	pop	{r7, pc}
- 8001e78:	0800ad18 	.word	0x0800ad18
- 8001e7c:	0800ad7c 	.word	0x0800ad7c
- 8001e80:	0800ad50 	.word	0x0800ad50
+ 8001e78:	0800ad08 	.word	0x0800ad08
+ 8001e7c:	0800ad6c 	.word	0x0800ad6c
+ 8001e80:	0800ad40 	.word	0x0800ad40
  8001e84:	200019e4 	.word	0x200019e4
- 8001e88:	0800ad64 	.word	0x0800ad64
+ 8001e88:	0800ad54 	.word	0x0800ad54
 
 08001e8c <Reset_Handler>:
 
@@ -4575,7 +4575,7 @@ LoopFillZerobss:
   ldr r1, =_edata
  8001ecc:	20000084 	.word	0x20000084
   ldr r2, =_sidata
- 8001ed0:	0800ae8c 	.word	0x0800ae8c
+ 8001ed0:	0800ae7c 	.word	0x0800ae7c
   ldr r2, =_sbss
  8001ed4:	20000084 	.word	0x20000084
   ldr r4, =_ebss
@@ -5998,7 +5998,7 @@ void Controller_Config_MapInputJoystickAsJoystick(Controller_HandleTypeDef *c, u
  800287c:	eeb4 7ae7 	vcmpe.f32	s14, s15
  8002880:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  8002884:	d51d      	bpl.n	80028c2 <Controller_Config_MapInputJoystickAsJoystick+0x122>
-		c->joysticks._bits[js_out*2 + 0] += (int16_t)(val_x * (float)INT16_MIN);
+		c->joysticks._bits[js_out*2 + 0] += (int16_t)(val_x * -(float)INT16_MAX);
  8002886:	7f3b      	ldrb	r3, [r7, #28]
  8002888:	005b      	lsls	r3, r3, #1
  800288a:	687a      	ldr	r2, [r7, #4]
@@ -6036,11 +6036,11 @@ void Controller_Config_MapInputJoystickAsJoystick(Controller_HandleTypeDef *c, u
  80028e0:	eeb4 7ae7 	vcmpe.f32	s14, s15
  80028e4:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  80028e8:	d400      	bmi.n	80028ec <Controller_Config_MapInputJoystickAsJoystick+0x14c>
-		c->joysticks._bits[js_out*2 + 1] += (int16_t)(val_y * -(float)INT16_MIN);
+		c->joysticks._bits[js_out*2 + 1] += (int16_t)(val_y * (float)INT16_MAX);
 	}
 }
  80028ea:	e01f      	b.n	800292c <Controller_Config_MapInputJoystickAsJoystick+0x18c>
-		c->joysticks._bits[js_out*2 + 1] += (int16_t)(val_y * -(float)INT16_MIN);
+		c->joysticks._bits[js_out*2 + 1] += (int16_t)(val_y * (float)INT16_MAX);
  80028ec:	7f3b      	ldrb	r3, [r7, #28]
  80028ee:	005b      	lsls	r3, r3, #1
  80028f0:	3301      	adds	r3, #1
@@ -6074,8 +6074,8 @@ void Controller_Config_MapInputJoystickAsJoystick(Controller_HandleTypeDef *c, u
  8002932:	f85d 7b04 	ldr.w	r7, [sp], #4
  8002936:	4770      	bx	lr
  8002938:	200015f0 	.word	0x200015f0
- 800293c:	c7000000 	.word	0xc7000000
- 8002940:	47000000 	.word	0x47000000
+ 800293c:	c6fffe00 	.word	0xc6fffe00
+ 8002940:	46fffe00 	.word	0x46fffe00
 
 08002944 <Controller_Config_MapInputJoystickAsKeyboard>:
  * 		Byte 2: Threshold 3rd-Byte (float)
@@ -12126,7 +12126,7 @@ static uint32_t DMA_CalcBaseAndBitshift(DMA_HandleTypeDef *hdma)
  8004f00:	4770      	bx	lr
  8004f02:	bf00      	nop
  8004f04:	aaaaaaab 	.word	0xaaaaaaab
- 8004f08:	0800ad88 	.word	0x0800ad88
+ 8004f08:	0800ad78 	.word	0x0800ad78
 
 08004f0c <DMA_CheckFifoParam>:
   * @param  hdma       pointer to a DMA_HandleTypeDef structure that contains
@@ -15485,7 +15485,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  80061de:	bf00      	nop
  80061e0:	40023c00 	.word	0x40023c00
  80061e4:	40023800 	.word	0x40023800
- 80061e8:	0800ad54 	.word	0x0800ad54
+ 80061e8:	0800ad44 	.word	0x0800ad44
  80061ec:	20000078 	.word	0x20000078
  80061f0:	2000007c 	.word	0x2000007c
 
@@ -20747,7 +20747,7 @@ void Serial_Comm_ParseMessages(){
  8007f80:	bd80      	pop	{r7, pc}
  8007f82:	bf00      	nop
  8007f84:	20001bcc 	.word	0x20001bcc
- 8007f88:	0800ad90 	.word	0x0800ad90
+ 8007f88:	0800ad80 	.word	0x0800ad80
  8007f8c:	08020000 	.word	0x08020000
  8007f90:	20001bcd 	.word	0x20001bcd
  8007f94:	20001904 	.word	0x20001904
@@ -21129,7 +21129,7 @@ static uint16_t cdc_getDesc(USBD_CDC_IfHandleType *itf, uint8_t ifNum, uint8_t *
  80081c6:	371c      	adds	r7, #28
  80081c8:	46bd      	mov	sp, r7
  80081ca:	bdf0      	pop	{r4, r5, r6, r7, pc}
- 80081cc:	0800adac 	.word	0x0800adac
+ 80081cc:	0800ad9c 	.word	0x0800ad9c
 
 080081d0 <cdc_getString>:
  * @param itf: reference of the CDC interface
@@ -21763,7 +21763,7 @@ USBD_ReturnType USBD_CDC_MountInterface(USBD_CDC_IfHandleType *itf, USBD_HandleT
  8008526:	3710      	adds	r7, #16
  8008528:	46bd      	mov	sp, r7
  800852a:	bd80      	pop	{r7, pc}
- 800852c:	0800ade0 	.word	0x0800ade0
+ 800852c:	0800add0 	.word	0x0800add0
 
 08008530 <USBD_CDC_Transmit>:
  * @param data: pointer to the data to send
@@ -22025,7 +22025,7 @@ static uint16_t hid_getDesc(USBD_HID_IfHandleType *itf, uint8_t ifNum, uint8_t *
  80086ae:	46bd      	mov	sp, r7
  80086b0:	bdb0      	pop	{r4, r5, r7, pc}
  80086b2:	bf00      	nop
- 80086b4:	0800ae04 	.word	0x0800ae04
+ 80086b4:	0800adf4 	.word	0x0800adf4
 
 080086b8 <hid_getString>:
  * @param itf: reference of the HID interface
@@ -22438,7 +22438,7 @@ static USBD_ReturnType hid_setupStage(USBD_HID_IfHandleType *itf)
  800890e:	46bd      	mov	sp, r7
  8008910:	bd80      	pop	{r7, pc}
  8008912:	bf00      	nop
- 8008914:	0800ae0d 	.word	0x0800ae0d
+ 8008914:	0800adfd 	.word	0x0800adfd
 
 08008918 <hid_dataStage>:
 /**
@@ -22648,7 +22648,7 @@ USBD_ReturnType USBD_HID_MountInterface(USBD_HID_IfHandleType *itf, USBD_HandleT
  8008a36:	3710      	adds	r7, #16
  8008a38:	46bd      	mov	sp, r7
  8008a3a:	bd80      	pop	{r7, pc}
- 8008a3c:	0800ae18 	.word	0x0800ae18
+ 8008a3c:	0800ae08 	.word	0x0800ae08
 
 08008a40 <USBD_HID_ReportIn>:
  * @param data: pointer to the data to send
@@ -23894,7 +23894,7 @@ static uint16_t USBD_DeviceDesc(USBD_HandleType *dev, uint8_t *data)
  80090f6:	bcb0      	pop	{r4, r5, r7}
  80090f8:	4770      	bx	lr
  80090fa:	bf00      	nop
- 80090fc:	0800ae40 	.word	0x0800ae40
+ 80090fc:	0800ae30 	.word	0x0800ae30
 
 08009100 <USBD_ConfigDesc>:
  * @param dev: USB Device handle reference
@@ -24397,8 +24397,8 @@ USBD_ReturnType USBD_GetDescriptor(USBD_HandleType *dev)
  80093c6:	46bd      	mov	sp, r7
  80093c8:	bdf0      	pop	{r4, r5, r6, r7, pc}
  80093ca:	bf00      	nop
- 80093cc:	0800ae3c 	.word	0x0800ae3c
- 80093d0:	0800ae52 	.word	0x0800ae52
+ 80093cc:	0800ae2c 	.word	0x0800ae2c
+ 80093d0:	0800ae42 	.word	0x0800ae42
 
 080093d4 <USBD_EpDesc>:
  * @param epAddr: endpoint address
@@ -28575,10 +28575,10 @@ __weak void USB_vAllocateEPs(USB_HandleType * pxUSB)
  800abfe:	4798      	blx	r3
  800ac00:	3601      	adds	r6, #1
  800ac02:	e7f2      	b.n	800abea <__libc_init_array+0x1e>
- 800ac04:	0800ae84 	.word	0x0800ae84
- 800ac08:	0800ae84 	.word	0x0800ae84
- 800ac0c:	0800ae84 	.word	0x0800ae84
- 800ac10:	0800ae88 	.word	0x0800ae88
+ 800ac04:	0800ae74 	.word	0x0800ae74
+ 800ac08:	0800ae74 	.word	0x0800ae74
+ 800ac0c:	0800ae74 	.word	0x0800ae74
+ 800ac10:	0800ae78 	.word	0x0800ae78
 
 0800ac14 <memcpy>:
  800ac14:	440a      	add	r2, r1

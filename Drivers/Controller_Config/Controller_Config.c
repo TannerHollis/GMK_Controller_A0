@@ -254,10 +254,10 @@ void Controller_Config_MapInputJoystickAsJoystick(Controller_HandleTypeDef *c, u
 	float val_x = invert_x ? -joysticks[js_in].x.val : joysticks[js_in].x.val;
 	float val_y = invert_y ? -joysticks[js_in].y.val : joysticks[js_in].y.val;
 	if((val_x > deadzone_x) || (val_x < -deadzone_x)){
-		c->joysticks._bits[js_out*2 + 0] += (int16_t)(val_x * (float)INT16_MIN);
+		c->joysticks._bits[js_out*2 + 0] += (int16_t)(val_x * -(float)INT16_MAX);
 	}
 	if((val_y > deadzone_y) || (val_y < -deadzone_y)){
-		c->joysticks._bits[js_out*2 + 1] += (int16_t)(val_y * -(float)INT16_MIN);
+		c->joysticks._bits[js_out*2 + 1] += (int16_t)(val_y * (float)INT16_MAX);
 	}
 }
 
