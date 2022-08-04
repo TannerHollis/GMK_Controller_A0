@@ -12,7 +12,7 @@
 
 typedef struct {
     uint8_t report_id;
-    uint16_t buttons;
+    uint8_t buttons[2];
     uint8_t joysticks[8];
     uint8_t triggers[2];
 } HID_Report_In_TypeDef;
