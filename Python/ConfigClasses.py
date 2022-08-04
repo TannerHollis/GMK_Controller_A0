@@ -735,14 +735,6 @@ def test():
     config.addConfig(EncoderAsButton(ENCODER_SPEED_BASED, ENCODER_DIR_CLOCKWISE, AXIS_NON_INVERTED, 5.0, BUTTON_LEFT))
     config.addConfig(EncoderAsButton(ENCODER_SPEED_BASED, ENCODER_DIR_COUNTERCLOCKWISE, AXIS_NON_INVERTED, 5.0, BUTTON_RIGHT))
 
-    #Extra for Testing...
-    config.addConfig(ButtonAsJoystick(BUTTON_IN_0, JOYSTICK_LEFT, AXIS_X, AXIS_POSITIVE))
-    config.addConfig(ButtonAsKeyboard(BUTTON_IN_1, "GMK Controller Default"))
-    config.addConfig(JoystickAsButton(JOYSTICK_IN_0, AXIS_Y, AXIS_POSITIVE, AXIS_NON_INVERTED, 0.95, BUTTON_A))
-    config.addConfig(JoystickAsKeyboard(JOYSTICK_LEFT, AXIS_X, AXIS_NON_INVERTED, AXIS_POSITIVE, 0.95, "GMK Controller Default"))
-    config.addConfig(JoystickAsTrigger(JOYSTICK_LEFT, AXIS_X, AXIS_NON_INVERTED, AXIS_POSITIVE, 0.5, TRIGGER_LEFT))
-    config.addConfig(EncoderAsJoystick(ENCODER_LINEAR_BASED, ENCODER_DIRECTION_BASED, ENCODER_DIR_CLOCKWISE, AXIS_NON_INVERTED, 1.0, 0.5, 0.05, AXIS_X, AXIS_POSITIVE))
-
     #Configuration Directory
     configDir = "configs/"
     
