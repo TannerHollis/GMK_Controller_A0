@@ -2,15 +2,17 @@
 #define GMK_CONTROLLER_DRIVER_H
 
 #include <windows.h>
-
+#include <XInput.h>
+#include <ViGEm/Client.h>
 #include <libusb.h>
 #include <iostream>
 #include <inttypes.h>
 #include <conio.h>
+#pragma comment (lib, "setupapi.lib")
 
 typedef struct {
     uint8_t report_id;
-    uint8_t buttons[2];
+    uint16_t buttons;
     uint8_t joysticks[8];
     uint8_t triggers[2];
 } HID_Report_In_TypeDef;

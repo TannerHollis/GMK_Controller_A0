@@ -3,9 +3,7 @@
 
 #include "GMK_Controller_Driver.h"
 
-#include <XInput.h>
-#include <ViGEm/Client.h>
-#pragma comment (lib, "setupapi.lib")
+#define DEBUG 0
 
 // HID Class-Specific Requests values. See section 7.2 of the HID specifications
 #define HID_GET_REPORT                  0x01
@@ -61,7 +59,7 @@ void display_controller_data(Controller_Data_TypeDef* c)
 
 void map_controller_data(HID_Report_In_TypeDef* in, Controller_Data_TypeDef* out)
 {
-    out->buttons._bits = in->buttons[1] << 8 | in->buttons[0];
+    out->buttons._bits = in->buttons << 8 | in->buttons;
     out->joysticks._bits[0] = in->joysticks[1] << 8 | in->joysticks[0];
     out->joysticks._bits[1] = in->joysticks[3] << 8 | in->joysticks[2];
     out->joysticks._bits[2] = in->joysticks[5] << 8 | in->joysticks[4];
@@ -72,7 +70,22 @@ void map_controller_data(HID_Report_In_TypeDef* in, Controller_Data_TypeDef* out
 
 void map_controller_data_to_xinput(Controller_Data_TypeDef* in, XINPUT_STATE* out)
 {
-    out->Gamepad.wButtons = in->buttons._bits;
+    out->Gamepad.wButtons = 0x0000;
+    out->Gamepad.wButtons |= in->buttons.a ? XINPUT_GAMEPAD_A : 0x00;
+    out->Gamepad.wButtons |= in->buttons.b ? XINPUT_GAMEPAD_B : 0x00;
+    out->Gamepad.wButtons |= in->buttons.x ? XINPUT_GAMEPAD_X : 0x00;
+    out->Gamepad.wButtons |= in->buttons.y ? XINPUT_GAMEPAD_Y : 0x00;
+    out->Gamepad.wButtons |= in->buttons.rb ? XINPUT_GAMEPAD_RIGHT_SHOULDER : 0x00;
+    out->Gamepad.wButtons |= in->buttons.lb ? XINPUT_GAMEPAD_LEFT_SHOULDER : 0x00;
+    out->Gamepad.wButtons |= in->buttons.rth ? XINPUT_GAMEPAD_RIGHT_THUMB : 0x00;
+    out->Gamepad.wButtons |= in->buttons.lth ? XINPUT_GAMEPAD_LEFT_THUMB : 0x00;
+    out->Gamepad.wButtons |= in->buttons.back ? XINPUT_GAMEPAD_BACK : 0x00;
+    out->Gamepad.wButtons |= in->buttons.start ? XINPUT_GAMEPAD_START : 0x00;
+    out->Gamepad.wButtons |= in->buttons.right ? XINPUT_GAMEPAD_DPAD_RIGHT : 0x00;
+    out->Gamepad.wButtons |= in->buttons.left ? XINPUT_GAMEPAD_DPAD_LEFT : 0x00;
+    out->Gamepad.wButtons |= in->buttons.down ? XINPUT_GAMEPAD_DPAD_DOWN : 0x00;
+    out->Gamepad.wButtons |= in->buttons.up ? XINPUT_GAMEPAD_DPAD_UP : 0x00;
+
     out->Gamepad.bLeftTrigger = in->triggers.left;
     out->Gamepad.bRightTrigger = in->triggers.right;
     out->Gamepad.sThumbLX = in->joysticks.left.x;
@@ -100,7 +113,8 @@ libusb_error loop_input()
         ret = (libusb_error)libusb_interrupt_transfer(gmk_handle, GMK_ENDPOINT_IN, (uint8_t*)&hid_report_in, sizeof(hid_report_in), &len, 0);
         map_controller_data(&hid_report_in, &controller_data);
         map_controller_data_to_xinput(&controller_data, &gamepad_state);
-        display_controller_data(&controller_data);
+        if(DEBUG)
+            display_controller_data(&controller_data);
         vigem_error = vigem_target_x360_update(vigem_client, pad, *reinterpret_cast<XUSB_REPORT*>(&gamepad_state.Gamepad));
     }
 
@@ -152,6 +166,27 @@ libusb_error initialize_device()
     return ret;
 }
 
+VIGEM_ERROR inititalize_vigem()
+{
+    VIGEM_ERROR vigem_error = VIGEM_ERROR_NOT_SUPPORTED;
+
+    vigem_client = vigem_alloc();
+    if (vigem_client == nullptr)
+    {
+        printf("Not enough memory?\n");
+        return vigem_error;
+    }
+
+    vigem_error = vigem_connect(vigem_client);
+    if (!VIGEM_SUCCESS(vigem_error))
+    {
+        printf("Unable to find ViGEmBus device driver.\n");
+        return vigem_error;
+    }
+
+    return vigem_error;
+}
+
 int main()
 {
     libusb_error usb_error = initialize_device();
@@ -161,13 +196,16 @@ int main()
         printf(" Error: %s (%i)\n", libusb_strerror(usb_error), usb_error);
     }
 
-    VIGEM_ERROR vigem_error;
+    VIGEM_ERROR vigem_error = inititalize_vigem();
 
-    vigem_client = vigem_alloc();
-
-    vigem_error = vigem_connect(vigem_client);
-
-    usb_error = loop_input();
+    if (!VIGEM_SUCCESS(vigem_error))
+    {
+        printf("Error: %i", vigem_error);
+    }
+    else
+    {
+        usb_error = loop_input();
+    }
 
     if (usb_error != LIBUSB_SUCCESS)
     {
