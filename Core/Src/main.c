@@ -51,7 +51,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- ADC_HandleTypeDef hadc1;
+ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
 SPI_HandleTypeDef hspi1;
@@ -276,9 +276,6 @@ int main(void)
 		case USB_EVENT_HID_GAMEPAD_UPDATE:
 			Send_HID_Data(&controller);
 			break;
-		case SPI_EVENT_LED_UPDATE:
-			LED_Controller_Latch(&led_controller, GPIO_PIN_SET); //Latch new led output
-			break;
 	}
 	if(event_index_read != event_index_write){
 		event_index_read = (event_index_read + 1) % EVENT_BUFFER_LENGTH;
@@ -478,7 +475,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 99;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 3599;
+  htim1.Init.Period = 719;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -502,7 +499,7 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_ACTIVE;
-  sConfigOC.Pulse = 899;
+  sConfigOC.Pulse = 179;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -513,13 +510,13 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   __HAL_TIM_ENABLE_OCxPRELOAD(&htim1, TIM_CHANNEL_1);
-  sConfigOC.Pulse = 1899;
+  sConfigOC.Pulse = 359;
   if (HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
   __HAL_TIM_ENABLE_OCxPRELOAD(&htim1, TIM_CHANNEL_2);
-  sConfigOC.Pulse = 2699;
+  sConfigOC.Pulse = 539;
   if (HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
   {
     Error_Handler();
@@ -828,7 +825,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
-	write_next_event_state(SPI_EVENT_LED_UPDATE);
+	LED_Controller_Latch(&led_controller, GPIO_PIN_SET); //Latch new led output
 }
 
 /* USER CODE END 4 */
