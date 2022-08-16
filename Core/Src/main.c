@@ -227,10 +227,10 @@ int main(void)
 			HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, 4); //Trigger Joystick ADC read
 			break;
 		case TIM_EVENT_2:
-			RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
+			Controller_Config_MapControllerData(&controller_config, &controller); //Map Controller Configuration Data
 			break;
 		case TIM_EVENT_3:
-			Controller_Config_MapControllerData(&controller_config, &controller); //Map Controller Configuration Data
+			write_next_event_state(USB_EVENT_HID_GAMEPAD_UPDATE);
 			break;
 		case TIM_EVENT_4:
 			if(controller_cdc_output_flag){
@@ -238,7 +238,6 @@ int main(void)
 				controller_cdc_output_flag = 0;
 			}
 			Serial_Comm_CheckMessages(); //Read incoming messages
-			write_next_event_state(USB_EVENT_HID_GAMEPAD_UPDATE);
 			break;
 		case ADC_EVENT_UPDATE:
 			Joystick_Update(&(joysticks[0]));
@@ -275,6 +274,7 @@ int main(void)
 			break;
 		case USB_EVENT_HID_GAMEPAD_UPDATE:
 			Send_HID_Data(&controller);
+			RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
 			break;
 	}
 	if(event_index_read != event_index_write){
