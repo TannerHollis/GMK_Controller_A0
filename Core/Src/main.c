@@ -238,6 +238,7 @@ int main(void)
 				controller_cdc_output_flag = 0;
 			}
 			Serial_Comm_CheckMessages(); //Read incoming messages
+			write_next_event_state(USB_EVENT_HID_GAMEPAD_UPDATE);
 			break;
 		case ADC_EVENT_UPDATE:
 			Joystick_Update(&(joysticks[0]));
