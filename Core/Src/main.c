@@ -274,7 +274,7 @@ int main(void)
 			break;
 		case USB_EVENT_HID_GAMEPAD_UPDATE:
 			Send_HID_Data(&controller);
-			//RotaryEncoder_Update(&rotary_encoder); //Update RotaryEncoder periodically to clear speed and direction
+			RotaryEncoder_ClearPeakSpeed(&rotary_encoder); //Clear peak speeds
 			break;
 	}
 	if(event_index_read != event_index_write){
