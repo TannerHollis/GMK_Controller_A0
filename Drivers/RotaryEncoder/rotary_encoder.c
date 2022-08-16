@@ -137,9 +137,6 @@ RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTyp
 			if(last_state == STATE_10){
 				direction = COUNTERCLOCKWISE;
 			}
-			if(last_state == STATE_00){
-				direction = NONE;
-			}
 			break;
 		case STATE_01:
 			if(last_state == STATE_11){
@@ -147,9 +144,6 @@ RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTyp
 			}
 			if(last_state == STATE_00){
 				direction = COUNTERCLOCKWISE;
-			}
-			if(last_state == STATE_01){
-				direction = NONE;
 			}
 			break;
 		case STATE_11:
@@ -159,9 +153,6 @@ RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTyp
 			if(last_state == STATE_01){
 				direction = COUNTERCLOCKWISE;
 			}
-			if(last_state == STATE_11){
-				direction = NONE;
-			}
 			break;
 		case STATE_10:
 			if(last_state == STATE_00){
@@ -169,9 +160,6 @@ RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTyp
 			}
 			if(last_state == STATE_11){
 				direction = COUNTERCLOCKWISE;
-			}
-			if(last_state == STATE_10){
-				direction = NONE;
 			}
 			break;
 		default:
@@ -183,4 +171,5 @@ RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTyp
 void RotaryEncoder_ClearPeakSpeed(RotaryEncoder_HandleTypeDef *re){
 	re->speed_hz_peak = 0.0f;
 	re->speed_rpm_peak = 0.0f;
+	re->direction = NONE;
 }
