@@ -230,7 +230,7 @@ int main(void)
 			Controller_Config_MapControllerData(&controller_config, &controller); //Map Controller Configuration Data
 			break;
 		case TIM_EVENT_3:
-			RotaryEncoder_Update(&rotary_encoder);
+			write_next_event_state(USB_EVENT_HID_GAMEPAD_UPDATE);
 			break;
 		case TIM_EVENT_4:
 			if(controller_cdc_output_flag){
@@ -238,7 +238,6 @@ int main(void)
 				controller_cdc_output_flag = 0;
 			}
 			Serial_Comm_CheckMessages(); //Read incoming messages
-			write_next_event_state(USB_EVENT_HID_GAMEPAD_UPDATE);
 			break;
 		case ADC_EVENT_UPDATE:
 			Joystick_Update(&(joysticks[0]));
@@ -817,7 +816,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == ENCODER_A_Pin || GPIO_Pin == ENCODER_B_Pin){
-		//RotaryEncoder_Update(&rotary_encoder);
+		RotaryEncoder_Update(&rotary_encoder);
 	}
 }
 

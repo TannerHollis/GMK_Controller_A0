@@ -37,10 +37,19 @@ typedef struct{
 	} b;
 	uint16_t last_time;
 	RotaryEncoder_StateTypeDef last_state;
-	float position;
-	float position_increment;
-	float position_linear;
-	float linear_scale;
+	struct{
+		float position;
+		float last_position;
+		float increment;
+	} rotation;
+
+	struct{
+		float position;
+		float increment;
+	} linear;
+
+	uint8_t is_updated;
+
 	float ppr;
 	float speed_rpm;
 	float speed_hz;

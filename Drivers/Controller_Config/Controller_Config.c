@@ -348,8 +348,10 @@ void Controller_Config_MapInputEncoderAsButton(Controller_HandleTypeDef *c, uint
 	if(rotary_encoder.direction == dir){
 		if(speed_based)
 			c->buttons._bits |= (rotary_encoder.speed_hz_peak > speed_threshold) << ic_buffer[5];
-		else
-			c->buttons._bits |= 0x01 << ic_buffer[5];
+		else if(rotary_encoder.is_updated){
+			c->buttons._bits |= (rotary_encoder.is_updated) << ic_buffer[5];
+			rotary_encoder.is_updated = 0;
+		}
 	}
 }
 
@@ -400,7 +402,7 @@ void Controller_Config_MapInputEncoderAsJoystick(Controller_HandleTypeDef *c, ui
 		}
 	}
 	else{
-		float val = rotary_encoder.position_linear - linear_middle;
+		float val = rotary_encoder.linear.position - linear_middle;
 		c->joysticks._bits[js_out*2 + xy] += (val > linear_deadzone || val < -linear_deadzone) ? ((invert) ? val * INT16_MIN : val * -INT16_MIN) : 0;
 	}
 }
@@ -477,7 +479,7 @@ void Controller_Config_MapInputEncoderAsTrigger(Controller_HandleTypeDef *c, uin
 		}
 	}
 	else{
-		float val = rotary_encoder.position_linear - linear_middle;
+		float val = rotary_encoder.linear.position - linear_middle;
 		c->triggers._bits[tr_out] += (val > linear_deadzone || val < -linear_deadzone) ? ((invert) ? (1 - val) * UINT8_MAX : val * UINT8_MAX) : 0;
 	}
 }

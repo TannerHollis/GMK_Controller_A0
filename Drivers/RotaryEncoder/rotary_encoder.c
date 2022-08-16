@@ -40,10 +40,10 @@ RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_Typ
 	re.last_time = htim->Instance->CNT;
 	re.last_state = RotaryEncoder_GetState(&re);
 	re.ppr = ROTARYENCODER_PPR;
-	re.position = 0;
-	re.position_increment = 360.0f / re.ppr;
-	re.position_linear = 0;
-	re.linear_scale = ROTARYENCODER_LINEAR_SCALE;
+	re.rotation.position = 0;
+	re.rotation.increment = 360.0f / re.ppr;
+	re.linear.position = 0;
+	re.linear.increment = ROTARYENCODER_LINEAR_SCALE;
 	re.speed_rpm = 0;
 	re.speed_hz = 0;
 	re.direction = NONE;
@@ -83,26 +83,32 @@ void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re){
 	//Calculate direction
 	re->direction = RotaryEncoder_GetDirection(state, re->last_state);
 
+	//Update last position
+	re->rotation.last_position = re->rotation.position;
+
 	//Increment/Decrement position
 	if(re->direction == CLOCKWISE){
 		//Calculate the rotational position
-		re->position += (re->position + re->position_increment < 360.0f) ? re->position_increment : -360.0f + re->position_increment;
+		re->rotation.position += (re->rotation.position + re->rotation.increment < 360.0f) ? re->rotation.increment : -360.0f + re->rotation.increment;
 		//Calculate the linear position
-		re->position_linear += ((re->position_linear + re->linear_scale) < 1.0f) ? re->linear_scale : 0;
+		re->linear.position += ((re->linear.position + re->linear.increment) > 1.0f) ? 0 : re->linear.increment;
 		//Calculate rotational speed
 		re->speed_hz =  ROTARYENCODER_UPDATE_TIM_FREQ / (float)(time - re->last_time) / re->ppr;
 	}
 	else if(re->direction == COUNTERCLOCKWISE){
 		//Calculate the rotational position
-		re->position -= (re->position - re->position_increment > 0.0f) ? re->position_increment : -360.0f + re->position_increment;
+		re->rotation.position -= (re->rotation.position - re->rotation.increment > 0.0f) ? re->rotation.increment : -360.0f + re->rotation.increment;
 		//Calculate the linear position
-		re->position_linear += ((re->position_linear + re->linear_scale) < 1.0f) ? re->linear_scale : 0;
+		re->linear.position -= ((re->linear.position - re->linear.increment) < 0.0f) ? 0 : re->linear.increment;
 		//Calculate rotational speed
 		re->speed_hz =  ROTARYENCODER_UPDATE_TIM_FREQ / (float)(time - re->last_time) / re->ppr;
 	}
 	else{
 		re->speed_hz = 0;
 	}
+
+	//Calculate is updated
+	re->is_updated = state != re->last_state;
 
 	//Calculate rotational speed peak and RPM
 	re->speed_hz_peak = (re->speed_hz > re->speed_hz_peak) ? re->speed_hz : re->speed_hz_peak;
@@ -132,34 +138,34 @@ RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTyp
 	switch(state){
 		case STATE_00:
 			if(last_state == STATE_01){
-				direction = CLOCKWISE;
+				direction = COUNTERCLOCKWISE;
 			}
 			if(last_state == STATE_10){
-				direction = COUNTERCLOCKWISE;
+				direction = CLOCKWISE;
 			}
 			break;
 		case STATE_01:
 			if(last_state == STATE_11){
-				direction = CLOCKWISE;
+				direction = COUNTERCLOCKWISE;
 			}
 			if(last_state == STATE_00){
-				direction = COUNTERCLOCKWISE;
+				direction = CLOCKWISE;
 			}
 			break;
 		case STATE_11:
 			if(last_state == STATE_10){
-				direction = CLOCKWISE;
+				direction = COUNTERCLOCKWISE;
 			}
 			if(last_state == STATE_01){
-				direction = COUNTERCLOCKWISE;
+				direction = CLOCKWISE;
 			}
 			break;
 		case STATE_10:
 			if(last_state == STATE_00){
-				direction = CLOCKWISE;
+				direction = COUNTERCLOCKWISE;
 			}
 			if(last_state == STATE_11){
-				direction = COUNTERCLOCKWISE;
+				direction = CLOCKWISE;
 			}
 			break;
 		default:
