@@ -345,7 +345,7 @@ void Controller_Config_MapInputEncoderAsButton(Controller_HandleTypeDef *c, uint
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
 	float speed_threshold = *(float *)(&ic_buffer[1]);
-	if(ccw && rotary_encoder.direction == dir){
+	if(rotary_encoder.direction == dir){
 		if(speed_based)
 			c->buttons._bits |= (rotary_encoder.speed_rpm > speed_threshold) << ic_buffer[5];
 		else
@@ -392,7 +392,7 @@ void Controller_Config_MapInputEncoderAsJoystick(Controller_HandleTypeDef *c, ui
 	uint8_t xy = GET_BIT(ic_buffer[13], 1);
 	uint8_t pn = GET_BIT(ic_buffer[13], 2);
 	if(binary_based){
-		if(ccw && rotary_encoder.direction == dir){
+		if(rotary_encoder.direction == dir){
 			if(speed_based)
 				c->joysticks._bits[js_out*2 + xy] += (pn ? INT16_MIN : INT16_MAX) * (int16_t)(rotary_encoder.speed_rpm > speed_threshold);
 			else
@@ -424,7 +424,7 @@ void Controller_Config_MapInputEncoderAsKeyboard(Controller_HandleTypeDef *c, ui
 	uint8_t invert = GET_BIT(ic_buffer[0], 2);
 	RotaryEncoder_DirectionTypeDef dir = (invert) ? (ccw) ? CLOCKWISE : COUNTERCLOCKWISE : (ccw) ? COUNTERCLOCKWISE : CLOCKWISE;
 	float speed_threshold = *(float *)(&ic_buffer[1]);
-	if(ccw && rotary_encoder.direction == dir){
+	if(rotary_encoder.direction == dir){
 		if(speed_based){
 			if(rotary_encoder.speed_rpm > speed_threshold)
 				write_next_keyboard_event_state(&(ic_buffer[5]), str_length - 5);
@@ -469,7 +469,7 @@ void Controller_Config_MapInputEncoderAsTrigger(Controller_HandleTypeDef *c, uin
 	float linear_deadzone = *(float *)(&ic_buffer[9]);
 	uint8_t tr_out = GET_BIT(ic_buffer[13], 0);
 	if(binary_based){
-		if(ccw && rotary_encoder.direction == dir){
+		if(rotary_encoder.direction == dir){
 			if(speed_based)
 				c->triggers._bits[tr_out] += UINT8_MAX * (float)(rotary_encoder.speed_rpm > speed_threshold);
 			else
