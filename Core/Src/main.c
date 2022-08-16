@@ -230,7 +230,7 @@ int main(void)
 			Controller_Config_MapControllerData(&controller_config, &controller); //Map Controller Configuration Data
 			break;
 		case TIM_EVENT_3:
-			write_next_event_state(USB_EVENT_HID_GAMEPAD_UPDATE);
+			RotaryEncoder_Update(&rotary_encoder);
 			break;
 		case TIM_EVENT_4:
 			if(controller_cdc_output_flag){
@@ -247,9 +247,6 @@ int main(void)
 			}
 			else if(joysticks[0].calibrate.iters == 1)
 				LED_Controller_ProgressBarDisable(&led_controller);
-			break;
-		case GPIO_EVENT_ENCODER_UPDATE:
-			RotaryEncoder_Update(&rotary_encoder);
 			break;
 		case USB_EVENT_CHANGE_PROFILE:
 			Controller_Config_GetConfig(&controller_config, controller_config_profile);
@@ -274,7 +271,6 @@ int main(void)
 			break;
 		case USB_EVENT_HID_GAMEPAD_UPDATE:
 			Send_HID_Data(&controller);
-			RotaryEncoder_ClearPeakSpeed(&rotary_encoder); //Clear peak speeds
 			break;
 	}
 	if(event_index_read != event_index_write){
@@ -820,7 +816,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == ENCODER_A_Pin || GPIO_Pin == ENCODER_B_Pin){
-		write_next_event_state(GPIO_EVENT_ENCODER_UPDATE);
+		//RotaryEncoder_Update(&rotary_encoder);
 	}
 }
 
