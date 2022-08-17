@@ -73,6 +73,7 @@ RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_Typ
 RotaryEncoder_StateTypeDef RotaryEncoder_GetState(RotaryEncoder_HandleTypeDef *re);
 void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re);
 RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTypeDef state, RotaryEncoder_StateTypeDef last_state);
-void RotaryEncoder_ClearPeakSpeed(RotaryEncoder_HandleTypeDef *re);
+float RotaryEncoder_CalculateRotationalPosition(RotaryEncoder_HandleTypeDef *re);
+float RotaryEncoder_CalculateLinearPosition(RotaryEncoder_HandleTypeDef *re);
 
 #endif /* ROTARYENCODER_ROTARY_ENCODER_H_ */
