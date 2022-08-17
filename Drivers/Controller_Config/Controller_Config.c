@@ -347,10 +347,10 @@ void Controller_Config_MapInputEncoderAsButton(Controller_HandleTypeDef *c, uint
 	float speed_threshold = *(float *)(&ic_buffer[1]);
 	if(rotary_encoder.direction == dir){
 		if(speed_based)
-			c->buttons._bits |= (rotary_encoder.speed_hz_peak > speed_threshold) << ic_buffer[5];
-		else if(rotary_encoder.is_updated){
-			c->buttons._bits |= (rotary_encoder.is_updated) << ic_buffer[5];
-			rotary_encoder.is_updated = 0;
+			c->buttons._bits |= (rotary_encoder.speed_hz > speed_threshold) << ic_buffer[5];
+		else if(rotary_encoder.steps.complete){
+			c->buttons._bits |= 0x01 << ic_buffer[5];
+			rotary_encoder.steps.complete = 0;
 		}
 	}
 }

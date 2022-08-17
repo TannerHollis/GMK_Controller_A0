@@ -31,15 +31,25 @@ typedef struct{
 		GPIO_TypeDef *GPIO_Port;
 		uint16_t GPIO_Pin;
 	} a;
+
 	struct {
 		GPIO_TypeDef *GPIO_Port;
 		uint16_t GPIO_Pin;
 	} b;
-	uint16_t last_time;
-	RotaryEncoder_StateTypeDef last_state;
+
+	struct{
+		uint16_t last;
+		uint16_t current;
+	} time;
+
+	struct{
+		RotaryEncoder_StateTypeDef last;
+		RotaryEncoder_StateTypeDef current;
+		RotaryEncoder_StateTypeDef initial;
+	} state;
+
 	struct{
 		float position;
-		float last_position;
 		float increment;
 	} rotation;
 
@@ -48,13 +58,14 @@ typedef struct{
 		float increment;
 	} linear;
 
-	uint8_t is_updated;
+	struct{
+		int16_t count;
+		uint8_t complete;
+	} steps;
 
 	float ppr;
 	float speed_rpm;
 	float speed_hz;
-	float speed_hz_peak;
-	float speed_rpm_peak;
 	RotaryEncoder_DirectionTypeDef direction;
 } RotaryEncoder_HandleTypeDef;
 
