@@ -1,2 +1,0 @@
-C:\Users\TannerGaming\STM32CubeIDE\workspace_1.3.0\GMK_Controller_A0\GMK_Controller_Driver\GMK_Controller_Driver\Release\GMK_Controller_Driver.exe
-C:\Users\TannerGaming\STM32CubeIDE\workspace_1.3.0\GMK_Controller_A0\GMK_Controller_Driver\Release\GMK_Controller_Driver.exe

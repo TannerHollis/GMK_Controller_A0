@@ -141,7 +141,7 @@ libusb_error initialize_device()
     if (gmk_handle == NULL)
     {
         printf("Unable to open GMK Controller\n VID=%x\tPID=%x\n", vid, pid);
-        return ret;
+        return LIBUSB_ERROR_NO_DEVICE;
     }
 
     int config;
@@ -187,13 +187,15 @@ VIGEM_ERROR inititalize_vigem()
     return vigem_error;
 }
 
-int main()
+libusb_error main_loop()
 {
+
     libusb_error usb_error = initialize_device();
-    
+
     if (usb_error != LIBUSB_SUCCESS)
     {
         printf(" Error: %s (%i)\n", libusb_strerror(usb_error), usb_error);
+        return usb_error;
     }
 
     VIGEM_ERROR vigem_error = inititalize_vigem();
@@ -201,6 +203,7 @@ int main()
     if (!VIGEM_SUCCESS(vigem_error))
     {
         printf("Error: %i", vigem_error);
+        return usb_error;
     }
     else
     {
@@ -210,6 +213,7 @@ int main()
     if (usb_error != LIBUSB_SUCCESS)
     {
         printf(" Error: %s (%i)\n", libusb_strerror(usb_error), usb_error);
+        return usb_error;
     }
 
     if (gmk_handle != NULL)
@@ -223,4 +227,17 @@ int main()
 
     libusb_exit(NULL);
     return usb_error;
+
+}
+
+int main()
+{
+    bool run = true;
+
+    while (run)
+    {
+        main_loop();
+        std::chrono::seconds dura(5);
+        std::this_thread::sleep_for(dura);
+    }
 }

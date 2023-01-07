@@ -8,6 +8,7 @@
 #include <iostream>
 #include <inttypes.h>
 #include <conio.h>
+#include <thread>
 #pragma comment (lib, "setupapi.lib")
 
 typedef struct {
