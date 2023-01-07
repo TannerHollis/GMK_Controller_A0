@@ -66,7 +66,7 @@ void map_controller_data(HID_Report_In_TypeDef* in, Controller_Data_TypeDef* out
 {
     out->buttons._bits = in->buttons[1] << 8 | in->buttons[0];
     out->joysticks._bits[0] = in->joysticks[1] << 8 | in->joysticks[0];
-    out->joysticks._bits[1] = in->joysticks[3] << 8 | in->joysticks[2];
+    out->joysticks._bits[1] = -(in->joysticks[3] << 8 | in->joysticks[2]);
     out->joysticks._bits[2] = in->joysticks[5] << 8 | in->joysticks[4];
     out->joysticks._bits[3] = in->joysticks[7] << 8 | in->joysticks[6];
     out->triggers._bits[0] = in->triggers[0];
