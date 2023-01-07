@@ -3,7 +3,7 @@
 
 #include "GMK_Controller_Driver.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 // HID Class-Specific Requests values. See section 7.2 of the HID specifications
 #define HID_GET_REPORT                  0x01
@@ -16,11 +16,16 @@
 #define HID_REPORT_TYPE_OUTPUT          0x02
 #define HID_REPORT_TYPE_FEATURE         0x03
 
-#define GMK_ENDPOINT_IN                 0x83
+//#define GMK_ENDPOINT_IN                 0x83 // For Controller
+#define GMK_ENDPOINT_IN                 0x81 // For Joystick
 #define GMK_ENDPOINT_OUT                0x01
 
 uint16_t vid = 0x0483;
-uint16_t pid = 0x5740;
+//uint16_t pid = 0x5740; // For Controller
+uint16_t pid = 0x5750; // For Joystick
+
+//uint8_t interface = 2; // For Controller
+uint8_t interface = 0; // For Joystick
 
 static libusb_device_handle* gmk_handle = NULL;
 
@@ -154,11 +159,11 @@ libusb_error initialize_device()
         return ret;
     }
 
-    ret = (libusb_error)libusb_claim_interface(gmk_handle, 2);
+    ret = (libusb_error)libusb_claim_interface(gmk_handle, interface);
 
     if (ret != LIBUSB_SUCCESS)
     {
-        printf("Unable to claim interface.\n");
+        printf("Unable to claim interface %d.\n", interface);
         return ret;
     }
 
