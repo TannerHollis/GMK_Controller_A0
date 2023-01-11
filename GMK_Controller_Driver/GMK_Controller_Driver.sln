@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GMK_Controller_Driver", "GM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GMK_Driver_NET", "..\GMK_Driver_NET\GMK_Driver_NET.csproj", "{3F423E21-6056-4ED8-BD89-5B4C0910B289}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GMK_Driver_Test", "..\GMKDriverTest\GMK_Driver_Test.csproj", "{C31A86BB-6ADF-4296-B693-1C2BE2EE26B7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GMK_Driver_Test", "..\GMK_Driver_Test\GMK_Driver_Test.csproj", "{C31A86BB-6ADF-4296-B693-1C2BE2EE26B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

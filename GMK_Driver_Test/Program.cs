@@ -9,16 +9,18 @@ namespace GMKDriverTest
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             GMKDriver driver = new GMKDriver(GMKControllerType.JOYSTICK);
 
             if(!driver.FindUsbDevice())
             {
-                return;
+                return -1;
             }
 
-            driver.loopRead();
+            driver.Loop();
+
+            return 0;
         }
     }
 }
