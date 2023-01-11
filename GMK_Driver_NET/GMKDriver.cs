@@ -19,11 +19,6 @@ namespace GMK_Driver_NET
         TEST
     }
 
-    internal class ControllerTypeDef
-    {
-
-    }
-
     public class GMKDriver
     {
         private ViGEmClient _vigemClient;
@@ -36,10 +31,8 @@ namespace GMK_Driver_NET
         private int _vid; // Vendor ID
         private int _pid; // Product ID
         private int _ifN; // Interface Number
-        private int _endpointIn;
+        private int _endpointIn; // Endpoint number
         private ReadEndpointID _readEndpointID;
-
-        private string _status;
 
         private const int ENDPOINT_DATA_SIZE = 13;
 
@@ -80,31 +73,29 @@ namespace GMK_Driver_NET
         {
             // Create USB Finder instance
             UsbDeviceFinder usbFinder = new UsbDeviceFinder(_vid, _pid);
-            
-            // Try to find device, with associated VID and PID
-            UsbDevice usbDevice = UsbDevice.OpenUsbDevice(usbFinder);
-            if (usbDevice == null)
+
+            using (var context = new UsbContext())
+            {
+                // Try to find device, with associated VID and PID
+                _libusbClient = context.Find(usbFinder);
+            }
+
+            if (_libusbClient == null)
             {
                 Console.WriteLine("Could not find GMK: " + _controllerType.ToString());
                 Console.WriteLine(" VID: " + _vid.ToString() + " PID: " + _pid.ToString());
                 return false;
             }
+
+            _libusbClient.Open();
             
+
             // Convert device to interface and claim interface and configure
-            _libusbClient = usbDevice as IUsbDevice;
             if(!ReferenceEquals(_libusbClient, null))
             {
-                if(!_libusbClient.GetConfiguration(out byte config))
-                {
-                    Console.WriteLine("Unable to get device configuration.");
-                    return false;
-                }
+                int config = _libusbClient.Configuration;
 
-                if(_libusbClient.SetConfiguration(config))
-                {
-                    Console.WriteLine("Unable to set device configuration.");
-                    return false;
-                }
+                _libusbClient.SetConfiguration(config);
 
                 if(_libusbClient.ClaimInterface(_ifN))
                 {
@@ -118,15 +109,15 @@ namespace GMK_Driver_NET
             Console.WriteLine("Active endpoints:");
             bool endpointMatchFound = false;
             _readEndpointID = ReadEndpointID.Ep01;
-            foreach(UsbEndpointBase endpoint in _libusbClient.ActiveEndpoints)
+            foreach(LibUsbDotNet.Info.UsbEndpointInfo endpoint in _libusbClient.Configs[0].Interfaces[0].Endpoints)
             {
                 string endpointMatch = string.Empty;
-                if(Convert.ToInt32(endpoint.EpNum) == _endpointIn)
+                if(Convert.ToInt32(endpoint.EndpointAddress) == _endpointIn)
                 {
                     endpointMatch = " - ENDPOINT MATCH";
                     endpointMatchFound = true;
                 }
-                Console.WriteLine(" - " + endpoint.ToString() + ":" + endpoint.EpNum.ToString() + endpointMatch);
+                Console.WriteLine(" - " + endpoint.ToString() + ":" + endpoint.EndpointAddress.ToString() + endpointMatch);
             }
 
             if(!endpointMatchFound)
@@ -145,8 +136,6 @@ namespace GMK_Driver_NET
             return true;
         }
 
-        
-
         public void Loop()
         {
             _controller = new XInputController();
@@ -157,12 +146,12 @@ namespace GMK_Driver_NET
             
             _xbox360Controller.Connect();
             
-            ErrorCode ec = ErrorCode.None;
+            Error ec = Error.Success;
 
             byte[] readBuffer = new byte[ENDPOINT_DATA_SIZE];
             int bytesRead;
 
-            while (ec == ErrorCode.None)
+            while (ec == Error.Success)
             {
                 ec = _usbEndpointReader.Read(readBuffer, 0, out bytesRead);
 

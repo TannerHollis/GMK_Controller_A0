@@ -11,10 +11,11 @@ namespace GMKDriverTest
     {
         static int Main(string[] args)
         {
-            GMKDriver driver = new GMKDriver(GMKControllerType.JOYSTICK);
+            GMKDriver driver = new GMKDriver(GMKControllerType.TEST);
 
             if(!driver.FindUsbDevice())
             {
+                Console.ReadLine();
                 return -1;
             }
 
