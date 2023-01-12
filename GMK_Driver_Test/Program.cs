@@ -13,6 +13,9 @@ namespace GMKDriverTest
     {
         static void Main(string[] args)
         {
+            DeviceConfig config = DeviceConfig.Default;
+            config.ToFile("test.json");
+            
             GMKDriver.Loop();
         }
     }

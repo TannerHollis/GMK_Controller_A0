@@ -60,6 +60,13 @@ namespace GMK_Driver_NET
         public List<ButtonAsJoystick> asJoysticks { get; set; }
         public List<ButtonAsTrigger> asTriggers { get; set; }
         public List<ButtonAsKeyboard> asKeyboards { get; set; }
+        public ButtonConfigs()
+        {
+            asButtons = new List<ButtonAsButton>();
+            asJoysticks = new List<ButtonAsJoystick>();
+            asTriggers = new List<ButtonAsTrigger>();
+            asKeyboards = new List<ButtonAsKeyboard>();
+        }
     }
 
     public class JoystickAsButton
@@ -114,6 +121,13 @@ namespace GMK_Driver_NET
         public List<JoystickAsJoystick> asJoysticks { get; set; }
         public List<JoystickAsTrigger> asTriggers { get; set; }
         public List<JoystickAsKeyboard> asKeyboards { get; set; }
+        public JoystickConfigs()
+        {
+            asButtons = new List<JoystickAsButton>();
+            asJoysticks = new List<JoystickAsJoystick>();
+            asTriggers = new List<JoystickAsTrigger>();
+            asKeyboards = new List<JoystickAsKeyboard>();
+        }
     }
 
     public class TriggerAsButton
@@ -170,6 +184,13 @@ namespace GMK_Driver_NET
         public List<TriggerAsJoystick> asJoysticks { get; set; }
         public List<TriggerAsTrigger> asTriggers { get; set; }
         public List<TriggerAsKeyboard> asKeyboards { get; set; }
+        public TriggerConfigs()
+        {
+            asButtons = new List<TriggerAsButton>();
+            asJoysticks = new List<TriggerAsJoystick>();
+            asTriggers = new List<TriggerAsTrigger>();
+            asKeyboards = new List<TriggerAsKeyboard>();
+        }
     }
 
     public enum ButtonIO
@@ -206,7 +227,6 @@ namespace GMK_Driver_NET
     public class DeviceConfig
     {
         public string name { get; set; }
-        public string serialNumber { get; set; }
         public JoystickConfig joystickLeft { get; set; }
         public JoystickConfig joystickRight { get; set; }
 
@@ -216,6 +236,18 @@ namespace GMK_Driver_NET
         public ButtonConfigs buttons { get; set; }
         public JoystickConfigs joysticks { get; set; }
         public TriggerConfigs triggers { get; set; }
+
+        public DeviceConfig(string name)
+        {
+            this.name = name;
+            joystickLeft = new JoystickConfig();
+            joystickRight = new JoystickConfig();
+            triggerLeft = new AxisConfig();
+            triggerRight = new AxisConfig();
+            buttons = new ButtonConfigs();
+            joysticks = new JoystickConfigs();
+            triggers = new TriggerConfigs();
+        }
 
         public class AxisConfig
         {
@@ -227,12 +259,21 @@ namespace GMK_Driver_NET
         public class TriggerConfig
         {
             public AxisConfig axis { get; set; }
+            public TriggerConfig()
+            {
+                axis = new AxisConfig();
+            }
         }
 
         public class JoystickConfig
         {
             public AxisConfig x { get; set; }
             public AxisConfig y { get; set; }
+            public JoystickConfig()
+            {
+                x = new AxisConfig();
+                y = new AxisConfig();
+            }
         }
 
         public void ToFile(string file)
@@ -254,7 +295,7 @@ namespace GMK_Driver_NET
         {
             get 
             {
-                DeviceConfig c = new DeviceConfig();
+                DeviceConfig c = new DeviceConfig("Default_v1.0");
 
                 // Left X
                 c.joystickLeft.x.deadZone = 0.1f;

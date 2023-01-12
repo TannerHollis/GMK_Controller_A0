@@ -138,5 +138,11 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="GMKlogo_transparent_square.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Configs\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
