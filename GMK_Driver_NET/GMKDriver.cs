@@ -9,159 +9,148 @@ using LibUsbDotNet;
 using LibUsbDotNet.LibUsb;
 using LibUsbDotNet.Main;
 using Nefarius.ViGEm.Client.Targets;
+using System.Windows.Forms;
+using System.Threading;
 
 namespace GMK_Driver_NET
 {
-    public enum GMKControllerType
-    {
-        JOYSTICK = 0,
-        CONTROLLER,
-        TEST
-    }
-
     public class GMKDriver
     {
-        private ViGEmClient _vigemClient;
-        private IXbox360Controller _xbox360Controller;
-        private IUsbDevice _libusbClient;
-        XInputController _controller;
-        private UsbEndpointReader _usbEndpointReader;
-        private GMKControllerType _controllerType;
+        private static DeviceAssociations _deviceAssociations;
+        private static List<Thread> _threads = new List<Thread>();
+        private static List<GMKDevice> _devices = new List<GMKDevice>();
+        private static TextBox _console;
 
-        private int _vid; // Vendor ID
-        private int _pid; // Product ID
-        private int _ifN; // Interface Number
-        private int _endpointIn; // Endpoint number
-        private ReadEndpointID _readEndpointID;
+        public static DeviceAssociations DeviceAssociations { get { return _deviceAssociations; } }
+        public static Thread[] Threads { get { return _threads.ToArray(); } }
+        public static GMKDevice[] Devices { get { return _devices.ToArray(); } }
 
-        private const int ENDPOINT_DATA_SIZE = 13;
-
-        public GMKDriver(GMKControllerType controllerType)
+        public static void SetConsole(TextBox console)
         {
-            _controllerType = controllerType;
-            Initialize();
+            _console = console;
         }
 
-        private void Initialize()
+        private static void WriteLine(string text)
         {
-            switch (_controllerType)
+            List<string> consoleOutputList = new List<string>();
+            if (_console != null)
             {
-                case GMKControllerType.JOYSTICK:
-                    _vid = 0x0483;
-                    _pid = 0x5750;
-                    _ifN = 0;
-                    _endpointIn = 0x81;
-                    break;
-                
-                case GMKControllerType.CONTROLLER:
-                    _vid = 0x0483;
-                    _pid = 0x5740;
-                    _ifN = 2;
-                    _endpointIn = 0x83;
-                    break;
-
-                case GMKControllerType.TEST:
-                    _vid = 0x46;
-                    _pid = 0x93;
-                    _ifN = 0;
-                    _endpointIn = 0x83;
-                    break;
-            }
-        }
-
-        public bool FindUsbDevice()
-        {
-            // Create USB Finder instance
-            UsbDeviceFinder usbFinder = new UsbDeviceFinder(_vid, _pid);
-
-            using (var context = new UsbContext())
-            {
-                // Try to find device, with associated VID and PID
-                _libusbClient = context.Find(usbFinder);
-            }
-
-            if (_libusbClient == null)
-            {
-                Console.WriteLine("Could not find GMK: " + _controllerType.ToString());
-                Console.WriteLine(" VID: " + _vid.ToString() + " PID: " + _pid.ToString());
-                return false;
-            }
-
-            _libusbClient.Open();
-            
-
-            // Convert device to interface and claim interface and configure
-            if(!ReferenceEquals(_libusbClient, null))
-            {
-                int config = _libusbClient.Configuration;
-
-                _libusbClient.SetConfiguration(config);
-
-                if(_libusbClient.ClaimInterface(_ifN))
+                consoleOutputList = new List<string>();
+                consoleOutputList.AddRange(_console.Lines);
+                consoleOutputList.Add(text);
+                _console.Invoke((MethodInvoker)delegate
                 {
-                    Console.WriteLine("Unable to claim device interface.");
-                    return false;
-                }
+                    _console.Lines = consoleOutputList.ToArray();
+                    _console.Refresh();
+                });
             }
             else
-                return false;
-
-            Console.WriteLine("Active endpoints:");
-            bool endpointMatchFound = false;
-            _readEndpointID = ReadEndpointID.Ep01;
-            foreach(LibUsbDotNet.Info.UsbEndpointInfo endpoint in _libusbClient.Configs[0].Interfaces[0].Endpoints)
             {
-                string endpointMatch = string.Empty;
-                if(Convert.ToInt32(endpoint.EndpointAddress) == _endpointIn)
-                {
-                    endpointMatch = " - ENDPOINT MATCH";
-                    endpointMatchFound = true;
-                }
-                Console.WriteLine(" - " + endpoint.ToString() + ":" + endpoint.EndpointAddress.ToString() + endpointMatch);
+                Console.WriteLine(text);
             }
-
-            if(!endpointMatchFound)
-            {
-                Console.WriteLine("No matching endpoint found.");
-                return false;
-            }
-
-            _usbEndpointReader = _libusbClient.OpenEndpointReader(ReadEndpointID.Ep01, ENDPOINT_DATA_SIZE, EndpointType.Interrupt);
-            if(_usbEndpointReader == null)
-            {
-                Console.WriteLine("Unable to open endpoint " + ReadEndpointID.Ep01);
-                return false;
-            }
-
-            return true;
         }
 
-        public void Loop()
+        public static void Loop()
         {
-            _controller = new XInputController();
-
-            _vigemClient = new ViGEmClient();
-
-            _xbox360Controller = _vigemClient.CreateXbox360Controller();
-            
-            _xbox360Controller.Connect();
-            
-            Error ec = Error.Success;
-
-            byte[] readBuffer = new byte[ENDPOINT_DATA_SIZE];
-            int bytesRead;
-
-            while (ec == Error.Success)
+            WriteLine("Scanning devices...");
+            List<GMKDevice> newDevices;
+            while (true)
             {
-                ec = _usbEndpointReader.Read(readBuffer, 0, out bytesRead);
-
-                if(bytesRead == ENDPOINT_DATA_SIZE)
+                newDevices = ScanAndStartDevices();
+                foreach(GMKDevice device in newDevices)
                 {
-                    Console.WriteLine(BitConverter.ToString(readBuffer, 0, ENDPOINT_DATA_SIZE));
-                    _controller.Map(readBuffer);
-                    _controller.SetController(_xbox360Controller);
+                    WriteLine("GMK: " + device.Type + "found. SN: " + device.SerialNumber);
+                }
+                
+                Thread.Sleep(5000);
+            }
+        }
+
+        private static List<GMKDevice> ScanAndStartDevices()
+        {
+            List<GMKDevice> newDevices = new List<GMKDevice>();
+
+            if (_deviceAssociations == null)
+            {
+                _deviceAssociations = DeviceAssociations.Load();
+            }
+
+            foreach (Thread thread in _threads)
+            {
+                if(!thread.IsAlive)
+                {
+                    _threads.Remove(thread);
                 }
             }
+
+            foreach(GMKDevice device in _devices)
+            {
+                if(!device.UsbDevice.IsOpen)
+                {
+                    _devices.Remove(device);
+                }
+            }
+
+            UsbDeviceFinder usbFinder = new UsbDeviceFinder(0x483);
+
+            using(UsbContext context = new UsbContext())
+            {
+                UsbDeviceCollection results = context.FindAll(usbFinder);
+
+                foreach(IUsbDevice device in results)
+                {
+                    foreach(GMKDevice gmkDevice in _devices)
+                    {
+                        if (gmkDevice.UsbDevice.Equals(device))
+                        {
+                            continue;
+                        }
+                    }
+
+                    ConfigAssociation configAssociation = _deviceAssociations.LookupSerialNumber(device.Info.SerialNumber);
+
+                    DeviceConfig config;
+
+                    if (configAssociation == null)
+                    {
+                        DeviceAssociations.AddNewDevice(device.Info.SerialNumber);
+                        config = DeviceConfig.Default;
+                        DeviceAssociations.AddConfiguration(device.Info.SerialNumber, config, true);
+                    }
+                    else
+                    {
+                        config = DeviceConfig.FromFile(configAssociation.defaultConfig);
+                    }
+
+                    if (device.ProductId == 0x5750)
+                    {
+                        GMKJoystick joystick = new GMKJoystick(device, config, _console);
+                        newDevices.Add(joystick);
+                    }
+
+                    if(device.ProductId == 0x5740)
+                    {
+                         GMKController controller = new GMKController(device, config, _console);
+                        _devices.Add(controller);
+                    }
+                }
+            }
+
+            foreach(GMKDevice device in newDevices)
+            {
+                Thread t = new Thread(new ParameterizedThreadStart(Run));
+                _threads.Add(t);
+                t.Start();
+            }
+
+            _devices.AddRange(newDevices);
+            return newDevices;
+        }
+
+        public static void Run(object device)
+        {
+            GMKDevice gmkDevice = (GMKDevice)device;
+            gmkDevice.Run();
         }
     }
 }
