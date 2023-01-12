@@ -25,6 +25,15 @@ namespace GMK_Driver_NET
             return JsonSerializer.Deserialize<DeviceAssociations>(jsonString);
         }
 
+        public void Save()
+        {
+            JsonSerializerOptions options = new JsonSerializerOptions();
+            options.WriteIndented = true;
+
+            string jsonString = JsonSerializer.Serialize<DeviceAssociations>(this, options);
+            File.WriteAllText("deviceAssociations.json", jsonString);
+        }
+
         public ConfigAssociation LookupSerialNumber(string serialNumber)
         {
             foreach(ConfigAssociation association in associations)
@@ -35,6 +44,30 @@ namespace GMK_Driver_NET
                 }
             }
             return null;
+        }
+
+        public void AddNewDevice(string serialNumber)
+        {
+            ConfigAssociation configAssociation = new ConfigAssociation();
+            configAssociation.serialNumber = serialNumber;
+            associations.Add(configAssociation);
+            Save();
+        }
+
+        public void AddConfiguration(string serialNumber, DeviceConfig config, bool setDefault)
+        {
+            ConfigAssociation configAssociation = LookupSerialNumber(serialNumber);
+
+            string file = "Configs\\" + config.name + ".json";
+
+            config.ToFile(file);
+            configAssociation.configFiles.Add(file);
+            
+            if(configAssociation.defaultConfig == null || setDefault)
+            {
+                configAssociation.defaultConfig = file;
+            }
+            Save();
         }
     }
 }

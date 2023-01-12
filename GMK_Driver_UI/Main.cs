@@ -20,41 +20,8 @@ namespace GMK_Driver_UI
         private static void ThreadProc(object consoleOutputObject)
         {
             TextBox consoleOutput = (TextBox)consoleOutputObject;
-
-            int ret;
-
-            GMKControllerType controllerType = GMKControllerType.Joystick;
-
-            while (true)
-            {
-                ret = MainLoop(controllerType, consoleOutput);
-
-                if (ret == -1)
-                {
-                    controllerType = (controllerType == GMKControllerType.Joystick) ?
-                        GMKControllerType.Controller :
-                        GMKControllerType.Joystick;
-                }
-
-                if (controllerType == GMKControllerType.Joystick)
-                {
-                    Thread.Sleep(5000);
-                }
-            }
-        }
-
-        private static int MainLoop(GMKControllerType controllerType, TextBox consoleOutput)
-        {
-            GMKDriver driver = new GMKDriver(controllerType, consoleOutput);
-
-            if (!driver.FindUsbDevice())
-            {
-                return -1;
-            }
-
-            driver.Loop();
-
-            return 0;
+            GMKDriver.SetConsole(consoleOutput);
+            GMKDriver.Loop();
         }
 
         public Main()
@@ -67,6 +34,7 @@ namespace GMK_Driver_UI
         private void Main_Load(object sender, EventArgs e)
         {
             mainThread.Start(consoleBox);
+            updateTimer.Enabled = true;
         }
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
@@ -79,6 +47,10 @@ namespace GMK_Driver_UI
                     trayIcon.Visible = true;
                     e.Cancel = true;
                     trayIcon.ContextMenuStrip = trayContextMenuStrip;
+                }
+                else
+                {
+                    trayIcon.Visible = false;
                 }
             }
         }
@@ -99,6 +71,16 @@ namespace GMK_Driver_UI
         private void quitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Main_Exit(sender, e);
+        }
+
+        private void updateTimer_Tick(object sender, EventArgs e)
+        {
+            deviceView.Items.Clear();
+            foreach(GMKDevice device in GMKDriver.Devices)
+            {
+                ListViewItem item = new ListViewItem(device.Type + " - " + device.SerialNumber, 0);
+                deviceView.Items.Add(item);
+            }
         }
     }
 }

@@ -99,6 +99,10 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="..\GMK_Driver_NET\deviceAssociations.json">
+      <Link>deviceAssociations.json</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="libusb-1.0">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

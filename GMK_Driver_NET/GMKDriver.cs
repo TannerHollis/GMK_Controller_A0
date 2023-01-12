@@ -16,11 +16,14 @@ namespace GMK_Driver_NET
 {
     public class GMKDriver
     {
-        public static DeviceAssociations _deviceAssociations;
-        public static List<Thread> _threads = new List<Thread>();
-        public static List<GMKDevice> _devices = new List<GMKDevice>();
-
+        private static DeviceAssociations _deviceAssociations;
+        private static List<Thread> _threads = new List<Thread>();
+        private static List<GMKDevice> _devices = new List<GMKDevice>();
         private static TextBox _console;
+
+        public static DeviceAssociations DeviceAssociations { get { return _deviceAssociations; } }
+        public static Thread[] Threads { get { return _threads.ToArray(); } }
+        public static GMKDevice[] Devices { get { return _devices.ToArray(); } }
 
         public static void SetConsole(TextBox console)
         {
@@ -110,7 +113,9 @@ namespace GMK_Driver_NET
 
                     if (configAssociation == null)
                     {
-                        config = new DeviceConfig();
+                        DeviceAssociations.AddNewDevice(device.Info.SerialNumber);
+                        config = DeviceConfig.Default;
+                        DeviceAssociations.AddConfiguration(device.Info.SerialNumber, config, true);
                     }
                     else
                     {
@@ -125,8 +130,8 @@ namespace GMK_Driver_NET
 
                     if(device.ProductId == 0x5740)
                     {
-                        // GMKController controller = new GMKController(device, config, console);
-                        //_devices.Add(controller);
+                         GMKController controller = new GMKController(device, config, _console);
+                        _devices.Add(controller);
                     }
                 }
             }

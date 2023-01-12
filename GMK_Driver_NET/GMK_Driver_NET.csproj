@@ -79,6 +79,7 @@
   <ItemGroup>
     <Compile Include="DeviceAssociations.cs" />
     <Compile Include="DeviceConfig.cs" />
+    <Compile Include="GMKController.cs" />
     <Compile Include="GMKDevice.cs" />
     <Compile Include="GMKDriver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

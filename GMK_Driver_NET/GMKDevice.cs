@@ -100,6 +100,12 @@ namespace GMK_Driver_NET
                 return ret;
             }
 
+            ret = Configure();
+            if(ret != GMKError.OK)
+            {
+                return ret;
+            }
+
             ret = Loop();
 
             _usbDevice.Close();
@@ -134,7 +140,7 @@ namespace GMK_Driver_NET
 
         private void WriteLine(string text)
         {
-            text = _serialNumber + " - " + text;
+            text = _type + ":" + _serialNumber + " - " + text;
             List<string> consoleOutputList = new List<string>();
             if (_consoleOutput != null)
             {
@@ -162,6 +168,10 @@ namespace GMK_Driver_NET
                 WriteLine("Unable to open read endpoint.");
                 return GMKError.InvalidEndpoint;
             }
+            else
+            {
+                WriteLine("Successfully opened device. Starting driver...");
+            }
 
             XInputController controller = new XInputController();
             ViGEmClient vigemClient = new ViGEmClient();
@@ -171,7 +181,7 @@ namespace GMK_Driver_NET
 
             Error ec = Error.Success;
 
-            byte[] readBuffer = new byte[13];
+            byte[] readBuffer = new byte[_endpointBufferSize];
             int bytesRead;
 
             while (ec == Error.Success)
