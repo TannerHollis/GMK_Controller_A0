@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GMK_Driver_NET", "..\GMK_Dr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GMK_Driver_Test", "..\GMK_Driver_Test\GMK_Driver_Test.csproj", "{C31A86BB-6ADF-4296-B693-1C2BE2EE26B7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GMK_Driver_UI", "..\GMK_Driver_UI\GMK_Driver_UI.csproj", "{06D0F436-3197-4F3E-8ED6-E1E70439983E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{C31A86BB-6ADF-4296-B693-1C2BE2EE26B7}.Release|x64.Build.0 = Release|Any CPU
 		{C31A86BB-6ADF-4296-B693-1C2BE2EE26B7}.Release|x86.ActiveCfg = Release|Any CPU
 		{C31A86BB-6ADF-4296-B693-1C2BE2EE26B7}.Release|x86.Build.0 = Release|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Debug|x64.Build.0 = Debug|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Debug|x86.Build.0 = Debug|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Release|x64.ActiveCfg = Release|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Release|x64.Build.0 = Release|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Release|x86.ActiveCfg = Release|Any CPU
+		{06D0F436-3197-4F3E-8ED6-E1E70439983E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

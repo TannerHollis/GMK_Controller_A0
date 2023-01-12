@@ -71,7 +71,14 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\GMK_Driver_NET\deviceAssociations.json">
+      <Link>deviceAssociations.json</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="App.config" />
+    <None Include="libusb-1.0">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
