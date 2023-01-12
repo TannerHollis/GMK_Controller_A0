@@ -44,7 +44,7 @@ namespace GMK_Driver_NET
 
         public void Map(byte[] bytes)
         {
-            buttons = bytes[1];
+            buttons = (UInt16)(bytes[2] << 8 | bytes[1]);
             up = GetBit(bytes[1], 0);
             down = GetBit(bytes[1], 1);
             left = GetBit(bytes[1], 2);
@@ -62,11 +62,11 @@ namespace GMK_Driver_NET
             x = GetBit(bytes[2], 6);
             y = GetBit(bytes[2], 7);
 
-            leftX = (Int16)(bytes[3] << 8 | bytes[4]);
-            leftY = (Int16)(bytes[5] << 8 | bytes[6]);
+            leftX = (Int16)(bytes[4] << 8 | bytes[3]);
+            leftY = (Int16)(-1 * (bytes[6] << 8 | bytes[5]));
 
-            rightX = (Int16)(bytes[7] << 8 | bytes[8]);
-            rightY = (Int16)(bytes[9] << 8 | bytes[10]);
+            rightX = (Int16)(bytes[8] << 8 | bytes[7]);
+            rightY = (Int16)(bytes[10] << 8 | bytes[9]);
 
             triggerLeft = (char)bytes[11];
             triggerRight = (char)bytes[12];
