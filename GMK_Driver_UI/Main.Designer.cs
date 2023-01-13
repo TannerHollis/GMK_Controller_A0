@@ -35,17 +35,17 @@
             this.consoleBox = new System.Windows.Forms.TextBox();
             this.deviceGroupBox = new System.Windows.Forms.GroupBox();
             this.deviceView = new System.Windows.Forms.ListView();
+            this.deviceViewContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.imageList = new System.Windows.Forms.ImageList(this.components);
             this.trayContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
-            this.deviceViewContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editBindingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deviceGroupBox.SuspendLayout();
-            this.trayContextMenuStrip.SuspendLayout();
             this.deviceViewContextMenu.SuspendLayout();
+            this.trayContextMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // trayIcon
@@ -85,11 +85,20 @@
             listViewItem1});
             this.deviceView.LargeImageList = this.imageList;
             this.deviceView.Location = new System.Drawing.Point(3, 16);
+            this.deviceView.MultiSelect = false;
             this.deviceView.Name = "deviceView";
             this.deviceView.Size = new System.Drawing.Size(649, 127);
             this.deviceView.TabIndex = 0;
             this.deviceView.TileSize = new System.Drawing.Size(64, 64);
             this.deviceView.UseCompatibleStateImageBehavior = false;
+            // 
+            // deviceViewContextMenu
+            // 
+            this.deviceViewContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.editBindingsToolStripMenuItem,
+            this.removeToolStripMenuItem});
+            this.deviceViewContextMenu.Name = "deviceViewContextMenu";
+            this.deviceViewContextMenu.Size = new System.Drawing.Size(153, 48);
             // 
             // imageList
             // 
@@ -125,25 +134,18 @@
             this.updateTimer.Interval = 2500;
             this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
             // 
-            // deviceViewContextMenu
+            // editBindingsToolStripMenuItem
             // 
-            this.deviceViewContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.openToolStripMenuItem1,
-            this.closeToolStripMenuItem});
-            this.deviceViewContextMenu.Name = "deviceViewContextMenu";
-            this.deviceViewContextMenu.Size = new System.Drawing.Size(104, 48);
+            this.editBindingsToolStripMenuItem.Name = "editBindingsToolStripMenuItem";
+            this.editBindingsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.editBindingsToolStripMenuItem.Text = "Edit Bindings...";
+            this.editBindingsToolStripMenuItem.Click += new System.EventHandler(this.editBindingsToolStripMenuItem_Click);
             // 
-            // openToolStripMenuItem1
+            // removeToolStripMenuItem
             // 
-            this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
-            this.openToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
-            this.openToolStripMenuItem1.Text = "Open";
-            // 
-            // closeToolStripMenuItem
-            // 
-            this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
-            this.closeToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
-            this.closeToolStripMenuItem.Text = "Close";
+            this.removeToolStripMenuItem.Name = "removeToolStripMenuItem";
+            this.removeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.removeToolStripMenuItem.Text = "Pause Driver";
             // 
             // Main
             // 
@@ -161,8 +163,8 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Main_FormClosing);
             this.Load += new System.EventHandler(this.Main_Load);
             this.deviceGroupBox.ResumeLayout(false);
-            this.trayContextMenuStrip.ResumeLayout(false);
             this.deviceViewContextMenu.ResumeLayout(false);
+            this.trayContextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -180,8 +182,8 @@
         private System.Windows.Forms.ImageList imageList;
         private System.Windows.Forms.Timer updateTimer;
         private System.Windows.Forms.ContextMenuStrip deviceViewContextMenu;
-        private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editBindingsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem removeToolStripMenuItem;
     }
 }
 

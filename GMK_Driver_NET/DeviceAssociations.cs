@@ -12,7 +12,7 @@ namespace GMK_Driver_NET
     {
         public string serialNumber { get; set; }
         public List<string> configFiles { get; set; }
-        public string defaultConfig { get; set; }
+        public string defaultConfigFile { get; set; }
     }
 
     public class DeviceAssociations
@@ -63,9 +63,9 @@ namespace GMK_Driver_NET
             config.ToFile(file);
             configAssociation.configFiles.Add(file);
             
-            if(configAssociation.defaultConfig == null || setDefault)
+            if(configAssociation.defaultConfigFile == null || setDefault)
             {
-                configAssociation.defaultConfig = file;
+                configAssociation.defaultConfigFile = file;
             }
             Save();
         }

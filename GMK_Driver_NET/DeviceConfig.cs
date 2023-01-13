@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,11 @@ namespace GMK_Driver_NET
         public ButtonIO input { get; set; }
         public ButtonIO output { get; set; }
 
+        override public string ToString()
+        {
+            return input.ToString() + " -> " + output.ToString();
+        }
+
         public ButtonAsButton(ButtonIO input, ButtonIO output)
         {
             this.input = input;
@@ -24,6 +30,12 @@ namespace GMK_Driver_NET
     {
         public ButtonIO input { get; set; }
         public JoystickIO output { get; set; }
+        public Axis axis { get; set; }
+
+        override public string ToString()
+        {
+            return input.ToString() + " -> " + output.ToString() + ", " + axis.ToString();
+        }
 
         public ButtonAsJoystick(ButtonIO input, JoystickIO output)
         {
@@ -36,6 +48,12 @@ namespace GMK_Driver_NET
     {
         public ButtonIO input { get; set; }
         public TriggerIO output { get; set; }
+
+        override public string ToString()
+        {
+            return input.ToString() + " -> " + output.ToString();
+        }
+
         public ButtonAsTrigger(ButtonIO input, TriggerIO output)
         {
             this.input = input;
@@ -47,6 +65,12 @@ namespace GMK_Driver_NET
     {
         public ButtonIO input { get; set; }
         public byte key { get; set; }
+
+        public override string ToString()
+        {
+            return input.ToString() + " -> " + (char)key;
+        }
+
         public ButtonAsKeyboard(ButtonIO input, byte key)
         {
             this.input = input;
@@ -222,6 +246,18 @@ namespace GMK_Driver_NET
     {
         Left,
         Right
+    }
+
+    public enum Axis
+    {
+        [Description("X+")]
+        XPositive,
+        [Description("X-")]
+        XNegative,
+        [Description("Y+")]
+        YPositive,
+        [Description("Y-")]
+        YNegative
     }
 
     public class DeviceConfig

@@ -114,6 +114,7 @@ namespace GMK_Driver_NET
         }
         private GMKError Connect()
         {
+
             if (!_usbDevice.IsOpen)
             {
                 _usbDevice.Open();

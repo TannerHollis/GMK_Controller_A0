@@ -79,8 +79,17 @@ namespace GMK_Driver_UI
             foreach(GMKDevice device in GMKDriver.Devices)
             {
                 ListViewItem item = new ListViewItem(device.Type + " - " + device.SerialNumber, 0);
+                item.Tag = device;
+                item.ImageIndex = 0;
                 deviceView.Items.Add(item);
             }
+        }
+
+        private void editBindingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            GMKDevice selectedDevice = (GMKDevice)deviceView.SelectedItems[0].Tag;
+            configurationEditor editor = new configurationEditor(selectedDevice);
+            editor.ShowDialog();
         }
     }
 }
