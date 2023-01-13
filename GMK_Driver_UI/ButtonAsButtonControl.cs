@@ -20,11 +20,12 @@ namespace GMK_Driver_UI
             InitializeComponent();
         }
 
-        private void LoadElements(ButtonAsButton buttonAsButton)
+        public void LoadWidget(ButtonAsButton buttonAsButton)
         {
             _buttonAsButton = buttonAsButton;
             inputButton.Select((int)_buttonAsButton.input, 1);
             outputButton.Select((int)_buttonAsButton.output, 1);
+            this.Visible = true;
         }
     }
 }

@@ -181,11 +181,12 @@ namespace GMK_Driver_UI
 
         private void bindingsTreeView_Click(object sender, EventArgs e)
         {
-            string type = bindingsTreeView.SelectedNode.Tag.GetType().ToString();
+            object binding = bindingsTreeView.SelectedNode.Tag;
+            string type = binding.GetType().ToString();
             switch (type)
             {
                 case "ButtonAsButton":
-                    gridLayout.Controls.Add();
+                    _buttonAsButtonControl.LoadWidget((ButtonAsButton)binding);
                     break;
             }
         }
