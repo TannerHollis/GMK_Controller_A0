@@ -8,8 +8,6 @@
 #ifndef ROTARYENCODER_ROTARY_ENCODER_H_
 #define ROTARYENCODER_ROTARY_ENCODER_H_
 
-#define ROTARYENCODER_UPDATE_TIM_FREQ 2000.0f
-#define ROTARYENCODER_PPR 24.0f
 #define ROTARYENCODER_LINEAR_SCALE 0.05f
 
 typedef enum{
@@ -66,10 +64,11 @@ typedef struct{
 	float ppr;
 	float speed_rpm;
 	float speed_hz;
+	float timer_freq;
 	RotaryEncoder_DirectionTypeDef direction;
 } RotaryEncoder_HandleTypeDef;
 
-RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin);
+RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin, float pulses_per_revolution, float timer_freq);
 RotaryEncoder_StateTypeDef RotaryEncoder_GetState(RotaryEncoder_HandleTypeDef *re);
 void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re);
 RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTypeDef state, RotaryEncoder_StateTypeDef last_state);

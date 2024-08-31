@@ -57,5 +57,3 @@ dkms.conf
 Debug/
 #GMK_Controller_Driver/Release/
 GMK_Controller_Driver/.vs/
-/.vs/GMK_Controller_A0/v17
-/.vs

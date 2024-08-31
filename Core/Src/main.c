@@ -26,7 +26,7 @@
 
 #include "stm32f4xx_hal.h"
 #include "usb_device.h"
-
+#include "usbd_hid.h"
 #include "buttonswitch.h"
 #include "led_controller.h"
 #include "controller_config.h"
@@ -105,11 +105,11 @@ uint8_t controller_cdc_output_flag = 0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_SPI1_Init(void);
+static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
-static void MX_DMA_Init(void);
+static void MX_SPI1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
@@ -129,6 +129,7 @@ extern void Send_HID_Data(Controller_HandleTypeDef* controller);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -151,11 +152,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_SPI1_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
-  MX_DMA_Init();
+  MX_SPI1_Init();
   MX_ADC1_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
@@ -178,11 +179,11 @@ int main(void)
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_4);
 
   //Initialize Joysticks
-  joysticks[0] = Joystick_Init(&adc_buffer[0], &adc_buffer[1]);
-  joysticks[1] = Joystick_Init(&adc_buffer[2], &adc_buffer[3]);
+  joysticks[0] = Joystick_Init(&adc_buffer[0], &adc_buffer[1], JOYSTICK_LEFT_FLIP_X, JOYSTICK_LEFT_FLIP_Y); // Left joystick
+  joysticks[1] = Joystick_Init(&adc_buffer[2], &adc_buffer[3], JOYSTICK_RIGHT_FLIP_X, JOYSTICK_RIGHT_FLIP_Y); // Right joystick
 
   //Initialize RotaryEncoder
-  rotary_encoder = RotaryEncoder_Init(&htim2, ENCODER_A_GPIO_Port, ENCODER_A_Pin, ENCODER_B_GPIO_Port, ENCODER_B_Pin);
+  rotary_encoder = RotaryEncoder_Init(&htim2, ENCODER_A_GPIO_Port, ENCODER_A_Pin, ENCODER_B_GPIO_Port, ENCODER_B_Pin, 12.0f, 72000000.0f); // 24 PPR & 72 MHz
 
   //Initialize ButtonSwitches
   buttons[0] = ButtonSwitch_Init(&htim2, SW_A_GPIO_Port, SW_A_Pin, GPIO_PIN_RESET);
@@ -361,7 +362,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 4;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
@@ -560,10 +561,10 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 35999;
+  htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 4294967295;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
@@ -714,6 +715,8 @@ static void MX_DMA_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -751,22 +754,27 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : ENCODER_A_Pin */
-  GPIO_InitStruct.Pin = ENCODER_A_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(ENCODER_A_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pin : ENCODER_B_Pin */
   GPIO_InitStruct.Pin = ENCODER_B_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ENCODER_B_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : ENCODER_A_Pin */
+  GPIO_InitStruct.Pin = ENCODER_A_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(ENCODER_A_GPIO_Port, &GPIO_InitStruct);
+
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
@@ -814,10 +822,28 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
 	}
 }
 
+#define STATE_BUFFER_MAX 32
+uint8_t state_index = 0;
+RotaryEncoder_StateTypeDef state_buffer[STATE_BUFFER_MAX];
+RotaryEncoder_DirectionTypeDef direction_buffer[STATE_BUFFER_MAX];
+float position_buffer[STATE_BUFFER_MAX];
+int16_t count_buffer[STATE_BUFFER_MAX];
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == ENCODER_A_Pin || GPIO_Pin == ENCODER_B_Pin){
 		RotaryEncoder_Update(&rotary_encoder);
 	}
+
+	if(!led_controller.progress_bar)
+		LED_Controller_ProgressBarEnable(&led_controller);
+
+	LED_Controller_ProgressBarUpdate(&led_controller, rotary_encoder.linear.position);
+
+	state_buffer[state_index] = rotary_encoder.state.current;
+	direction_buffer[state_index] = rotary_encoder.direction;
+	position_buffer[state_index] = rotary_encoder.rotation.position;
+	count_buffer[state_index] = rotary_encoder.steps.count;
+	state_index = (state_index + 1) % STATE_BUFFER_MAX;
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){

@@ -116,21 +116,26 @@ void write_next_keyboard_event_state(uint8_t *string_address, uint8_t string_len
 #define SW_LB_GPIO_Port GPIOA
 #define SW_LT_Pin GPIO_PIN_10
 #define SW_LT_GPIO_Port GPIOA
-#define ENCODER_A_Pin GPIO_PIN_15
-#define ENCODER_A_GPIO_Port GPIOA
-#define ENCODER_A_EXTI_IRQn EXTI15_10_IRQn
-#define ENCODER_B_Pin GPIO_PIN_3
-#define ENCODER_B_GPIO_Port GPIOB
+#define ENCODER_B_Pin GPIO_PIN_15
+#define ENCODER_B_GPIO_Port GPIOA
+#define ENCODER_B_EXTI_IRQn EXTI15_10_IRQn
+#define ENCODER_A_Pin GPIO_PIN_3
+#define ENCODER_A_GPIO_Port GPIOB
+#define ENCODER_A_EXTI_IRQn EXTI3_IRQn
 #define SW_X_Pin GPIO_PIN_4
 #define SW_X_GPIO_Port GPIOB
 #define SW_A_Pin GPIO_PIN_5
 #define SW_A_GPIO_Port GPIOB
+
 /* USER CODE BEGIN Private defines */
 
 #define EVENT_BUFFER_LENGTH 128
 #define KEYBOARD_EVENT_BUFFER_LENGTH 128
 
-
+#define JOYSTICK_LEFT_FLIP_X 0
+#define JOYSTICK_LEFT_FLIP_Y 0
+#define JOYSTICK_RIGHT_FLIP_X 0
+#define JOYSTICK_RIGHT_FLIP_Y 0
 
 /* USER CODE END Private defines */
 

@@ -14,7 +14,7 @@
 
 #include <joystick.h>
 
-Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer){
+Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer, uint8_t flip_axis_x, uint8_t flip_axis_y){
 	Joystick_HandleTypeDef js;
 
 	js.x.adc = x_buffer;
@@ -24,6 +24,7 @@ Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer){
 	js.x.deadzone = JOYSTICK_DEADZONE;
 	js.x.alivezone = JOYSTICK_ALIVEZONE;
 	js.x.val = 0;
+	js.x.flip_axis = flip_axis_x;
 
 	js.y.adc = y_buffer;
 	js.y.min = UINT16_MAX;
@@ -32,6 +33,7 @@ Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer){
 	js.y.deadzone = JOYSTICK_DEADZONE;
 	js.y.alivezone = JOYSTICK_ALIVEZONE;
 	js.y.val = 0;
+	js.y.flip_axis = flip_axis_y;
 
 	js.calibrate.iters_max = 0;
 	js.calibrate.iters = 0;
@@ -85,5 +87,7 @@ void Joystick_Update(Joystick_HandleTypeDef *js){
 	y_sign = (y_val > 0) ? y_val : -y_val;
 
 	js->x.val = (x_sign > js->x.deadzone && x_sign < js->x.alivezone) ? x_val : 0;
+	js->x.val = js->x.flip_axis ? -js->x.val : js->x.val; // Check for inverted
 	js->y.val = (y_sign > js->y.deadzone && y_sign < js->y.alivezone) ? y_val : 0;
+	js->y.val = js->y.flip_axis ? -js->y.val : js->y.val; // Check for inverted
 }
