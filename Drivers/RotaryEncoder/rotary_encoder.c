@@ -41,6 +41,7 @@ RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_Typ
 	re.state.last = RotaryEncoder_GetState(&re);
 	re.state.initial = re.state.last;
 	re.steps.count = 0;
+	re.steps.count_buffer = 0;
 	re.ppr = pulses_per_revolution;
 	re.rotation.position = 0;
 	re.rotation.increment = 360.0f / re.ppr / 4;
@@ -96,6 +97,9 @@ void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re){
 	re->steps.complete = re->state.current == re->state.initial;
 	if(re->steps.complete){
 		re->steps.count += re->direction == CLOCKWISE ? 1 : -1;
+		re->steps.count_buffer = re->direction == CLOCKWISE ?
+				ROTARYENCODER_STEPS_COUNT_BUFFER_MULTIPLIER :
+				-ROTARYENCODER_STEPS_COUNT_BUFFER_MULTIPLIER;
 	}
 
 	//Store current state/time as previous state/time

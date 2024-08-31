@@ -350,7 +350,16 @@ void Controller_Config_MapInputEncoderAsButton(Controller_HandleTypeDef *c, uint
 			c->buttons._bits |= (rotary_encoder.speed_hz > speed_threshold) << ic_buffer[5];
 		else if(rotary_encoder.steps.complete){
 			c->buttons._bits |= 0x01 << ic_buffer[5];
-			rotary_encoder.steps.complete = 0;
+
+			// Check for detect count, decrement/increment until it reaches zero
+			if(rotary_encoder.steps.count_buffer > 0)
+				rotary_encoder.steps.count_buffer--;
+			else
+				rotary_encoder.steps.count_buffer++;
+
+			// Acknowledge complete once count_buffer is zero
+			if(rotary_encoder.steps.count_buffer == 0)
+				rotary_encoder.steps.complete = 0;
 		}
 	}
 }

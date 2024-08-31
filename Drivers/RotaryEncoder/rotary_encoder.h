@@ -10,6 +10,8 @@
 
 #define ROTARYENCODER_LINEAR_SCALE 0.05f
 
+#define ROTARYENCODER_STEPS_COUNT_BUFFER_MULTIPLIER 100
+
 typedef enum{
 	NONE,
 	CLOCKWISE,
@@ -58,6 +60,7 @@ typedef struct{
 
 	struct{
 		int16_t count;
+		int16_t count_buffer;
 		uint8_t complete;
 	} steps;
 
