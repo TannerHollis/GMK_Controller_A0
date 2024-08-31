@@ -183,7 +183,7 @@ int main(void)
   joysticks[1] = Joystick_Init(&adc_buffer[2], &adc_buffer[3], JOYSTICK_RIGHT_FLIP_X, JOYSTICK_RIGHT_FLIP_Y); // Right joystick
 
   //Initialize RotaryEncoder
-  rotary_encoder = RotaryEncoder_Init(&htim2, ENCODER_A_GPIO_Port, ENCODER_A_Pin, ENCODER_B_GPIO_Port, ENCODER_B_Pin, 12.0f, 72000000.0f); // 24 PPR & 72 MHz
+  rotary_encoder = RotaryEncoder_Init(&htim2, ENCODER_A_GPIO_Port, ENCODER_A_Pin, ENCODER_B_GPIO_Port, ENCODER_B_Pin, 12.0f, 72000000.0f, 0); // 24 PPR & 72 MHz, non-inverted
 
   //Initialize ButtonSwitches
   buttons[0] = ButtonSwitch_Init(&htim2, SW_A_GPIO_Port, SW_A_Pin, GPIO_PIN_RESET);

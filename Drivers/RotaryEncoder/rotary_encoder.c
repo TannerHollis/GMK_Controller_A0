@@ -29,7 +29,8 @@
   *
   * @retval Returns the RotaryEncoder object
   */
-RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin, float pulses_per_revolution, float timer_freq){
+RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin, float pulses_per_revolution, float timer_freq, uint8_t invert)
+{
 	RotaryEncoder_HandleTypeDef re;
 	re.update_tim = htim;
 	re.a.GPIO_Port = a_port;
@@ -50,6 +51,7 @@ RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_Typ
 	re.speed_rpm = 0;
 	re.speed_hz = 0;
 	re.direction = NONE;
+	re.direction_counts = 0;
 
 	re.timer_freq = timer_freq;
 
@@ -63,10 +65,13 @@ RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_Typ
   * @retval Returns the RotaryEncoder state
   */
 RotaryEncoder_StateTypeDef RotaryEncoder_GetState(RotaryEncoder_HandleTypeDef *re){
-	uint8_t a_state = HAL_GPIO_ReadPin(re->a.GPIO_Port, re->a.GPIO_Pin);
-	uint8_t b_state = HAL_GPIO_ReadPin(re->b.GPIO_Port, re->b.GPIO_Pin);
+	uint8_t a_state = !HAL_GPIO_ReadPin(re->a.GPIO_Port, re->a.GPIO_Pin);
+	uint8_t b_state = !HAL_GPIO_ReadPin(re->b.GPIO_Port, re->b.GPIO_Pin);
 
-	return((RotaryEncoder_StateTypeDef)(a_state << 1 | b_state));
+	if(!re->invert)
+		return((RotaryEncoder_StateTypeDef)(b_state << 1 | a_state));
+	else
+		return((RotaryEncoder_StateTypeDef)(a_state << 1 | b_state));
 }
 
 /**
@@ -87,19 +92,23 @@ void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re){
 	re->state.current = RotaryEncoder_GetState(re);
 
 	//Calculate direction
-	re->direction = RotaryEncoder_GetDirection(re->state.current, re->state.last);
+	RotaryEncoder_DirectionTypeDef direction = RotaryEncoder_GetDirection(re->state.current, re->state.last);
+	re->direction_counts = (direction == re->direction) ? re->direction_counts + 1 : 0;
+	re->direction = direction;
 
 	//Update rotational/linear positions
 	RotaryEncoder_CalculateRotationalPosition(re);
 	RotaryEncoder_CalculateLinearPosition(re);
 
 	//Calculate updated
-	re->steps.complete = re->state.current == re->state.initial;
+	re->steps.complete = (re->state.current == re->state.initial) && (re->direction_counts >= 3);
+
 	if(re->steps.complete){
 		re->steps.count += re->direction == CLOCKWISE ? 1 : -1;
 		re->steps.count_buffer = re->direction == CLOCKWISE ?
 				ROTARYENCODER_STEPS_COUNT_BUFFER_MULTIPLIER :
 				-ROTARYENCODER_STEPS_COUNT_BUFFER_MULTIPLIER;
+		re->direction_counts = 0;
 	}
 
 	//Store current state/time as previous state/time

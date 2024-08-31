@@ -68,13 +68,16 @@ typedef struct{
 	float speed_rpm;
 	float speed_hz;
 	float timer_freq;
+	uint8_t invert;
 	RotaryEncoder_DirectionTypeDef direction;
+	int8_t direction_counts;
 } RotaryEncoder_HandleTypeDef;
 
-RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin, float pulses_per_revolution, float timer_freq);
+RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin, float pulses_per_revolution, float timer_freq, uint8_t invert);
 RotaryEncoder_StateTypeDef RotaryEncoder_GetState(RotaryEncoder_HandleTypeDef *re);
 void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re);
 RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTypeDef state, RotaryEncoder_StateTypeDef last_state);
+RotaryEncoder_StateTypeDef RotaryEncoder_GetPreviousState(RotaryEncoder_StateTypeDef state, RotaryEncoder_DirectionTypeDef direction);
 float RotaryEncoder_CalculateRotationalPosition(RotaryEncoder_HandleTypeDef *re);
 float RotaryEncoder_CalculateLinearPosition(RotaryEncoder_HandleTypeDef *re);
 
