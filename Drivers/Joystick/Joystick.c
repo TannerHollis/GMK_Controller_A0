@@ -14,7 +14,8 @@
 
 #include <joystick.h>
 
-Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer, uint8_t flip_axis_x, uint8_t flip_axis_y){
+Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer, uint8_t flip_x, uint8_t flip_y)
+{
 	Joystick_HandleTypeDef js;
 
 	js.x.adc = x_buffer;
@@ -24,7 +25,9 @@ Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer, uin
 	js.x.deadzone = JOYSTICK_DEADZONE;
 	js.x.alivezone = JOYSTICK_ALIVEZONE;
 	js.x.val = 0;
-	js.x.flip_axis = flip_axis_x;
+	js.x.filteredVal = 0;
+	js.x.vals = (float*)malloc(sizeof(float) * JOYSTICK_FILTER_SAMPLES);
+	js.x.invert = flip_x;
 
 	js.y.adc = y_buffer;
 	js.y.min = UINT16_MAX;
@@ -33,12 +36,24 @@ Joystick_HandleTypeDef Joystick_Init(uint16_t *x_buffer, uint16_t *y_buffer, uin
 	js.y.deadzone = JOYSTICK_DEADZONE;
 	js.y.alivezone = JOYSTICK_ALIVEZONE;
 	js.y.val = 0;
-	js.y.flip_axis = flip_axis_y;
+	js.y.filteredVal = 0;
+	js.y.vals = (float*)malloc(sizeof(float) * JOYSTICK_FILTER_SAMPLES);
+	js.y.invert = flip_y;
 
 	js.calibrate.iters_max = 0;
 	js.calibrate.iters = 0;
 	js.calibrate.flag = 0;
 	js.calibrate.weight = 1.0f;
+
+	js.filtWrite = 0;
+	js.filtRead = JOYSTICK_FILTER_SAMPLES - 1;
+
+	// Generate filter coefficients
+	js.filterCoeffs = (float*)malloc(sizeof(float) * JOYSTICK_FILTER_SAMPLES);
+	for(int i = 0; i < JOYSTICK_FILTER_SAMPLES; i++)
+	{
+		js.filterCoeffs[i] = JOYSTICK_FILTER_ALPHA * pow((1.0f - JOYSTICK_FILTER_ALPHA), (float)i);
+	}
 
 	return(js);
 }
@@ -87,7 +102,24 @@ void Joystick_Update(Joystick_HandleTypeDef *js){
 	y_sign = (y_val > 0) ? y_val : -y_val;
 
 	js->x.val = (x_sign > js->x.deadzone && x_sign < js->x.alivezone) ? x_val : 0;
-	js->x.val = js->x.flip_axis ? -js->x.val : js->x.val; // Check for inverted
 	js->y.val = (y_sign > js->y.deadzone && y_sign < js->y.alivezone) ? y_val : 0;
-	js->y.val = js->y.flip_axis ? -js->y.val : js->y.val; // Check for inverted
+
+	// Save value to filter buffer
+	js->x.vals[js->filtWrite] = js->x.val;
+	js->y.vals[js->filtWrite] = js->y.val;
+
+	// Processs exp moving average filter
+	float valSumX = 0;
+	float valSumY = 0;
+	for(int i = 0; i < JOYSTICK_FILTER_SAMPLES; i++)
+	{
+		uint8_t index = (js->filtWrite - i) < 0 ? JOYSTICK_FILTER_SAMPLES - 1 : js->filtWrite - i;
+		valSumX += js->x.vals[index] * js->filterCoeffs[i];
+		valSumY += js->y.vals[index] * js->filterCoeffs[i];
+	}
+
+	js->filtWrite = (js->filtWrite + 1) % JOYSTICK_FILTER_SAMPLES;
+
+	js->x.val = js->x.invert ? -valSumX : valSumX;
+	js->y.val = js->x.invert ? -valSumY : valSumY;
 }

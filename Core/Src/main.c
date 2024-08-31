@@ -822,28 +822,10 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
 	}
 }
 
-#define STATE_BUFFER_MAX 32
-uint8_t state_index = 0;
-RotaryEncoder_StateTypeDef state_buffer[STATE_BUFFER_MAX];
-RotaryEncoder_DirectionTypeDef direction_buffer[STATE_BUFFER_MAX];
-float position_buffer[STATE_BUFFER_MAX];
-int16_t count_buffer[STATE_BUFFER_MAX];
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == ENCODER_A_Pin || GPIO_Pin == ENCODER_B_Pin){
 		RotaryEncoder_Update(&rotary_encoder);
 	}
-
-	if(!led_controller.progress_bar)
-		LED_Controller_ProgressBarEnable(&led_controller);
-
-	LED_Controller_ProgressBarUpdate(&led_controller, rotary_encoder.linear.position);
-
-	state_buffer[state_index] = rotary_encoder.state.current;
-	direction_buffer[state_index] = rotary_encoder.direction;
-	position_buffer[state_index] = rotary_encoder.rotation.position;
-	count_buffer[state_index] = rotary_encoder.steps.count;
-	state_index = (state_index + 1) % STATE_BUFFER_MAX;
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
