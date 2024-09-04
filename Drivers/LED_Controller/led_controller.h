@@ -21,6 +21,8 @@ typedef struct {
 typedef struct {
 	TIM_HandleTypeDef *update_timer;
 	LED_Color_TypeDef leds[LEDS];
+	uint8_t debugLED;
+	LED_Color_TypeDef logoLED;
 	uint8_t progress_bar;
 	float progress_bar_val;
 	SPI_HandleTypeDef *spi;

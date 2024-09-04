@@ -34,6 +34,8 @@
 #include "joystick.h"
 #include "serial_comm.h"
 
+#include "dfu_config.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,6 +64,8 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
+
+const uint32_t end_constant __attribute__((section(".end_constant"))) = FLASH_VALID_SYMBOL;
 
 //Declare ADC buffer for joysticks
 uint16_t adc_buffer[4];
@@ -115,6 +119,7 @@ static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 extern void Send_HID_Data(Controller_HandleTypeDef* controller);
+
 
 /* USER CODE END PFP */
 

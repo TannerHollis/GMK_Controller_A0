@@ -35,6 +35,9 @@ extern USBD_HandleType *const UsbDevice;
 extern void HAL_USBD_Setup(void);
 void UsbDevice_Init(void);
 
+static void Get_SerialNum(uint8_t* pbuf);
+void splitIntegerUsingBitShifting(uint32_t value, uint8_t* result);
+
 #ifdef __cplusplus
 }
 #endif

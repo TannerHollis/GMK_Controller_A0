@@ -133,9 +133,9 @@ void write_next_keyboard_event_state(uint8_t *string_address, uint8_t string_len
 #define KEYBOARD_EVENT_BUFFER_LENGTH 128
 
 #define JOYSTICK_LEFT_FLIP_X 0
-#define JOYSTICK_LEFT_FLIP_Y 0
+#define JOYSTICK_LEFT_FLIP_Y 1
 #define JOYSTICK_RIGHT_FLIP_X 0
-#define JOYSTICK_RIGHT_FLIP_Y 0
+#define JOYSTICK_RIGHT_FLIP_Y 1
 
 /* USER CODE END Private defines */
 

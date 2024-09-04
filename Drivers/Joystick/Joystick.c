@@ -121,5 +121,5 @@ void Joystick_Update(Joystick_HandleTypeDef *js){
 	js->filtWrite = (js->filtWrite + 1) % JOYSTICK_FILTER_SAMPLES;
 
 	js->x.val = js->x.invert ? -valSumX : valSumX;
-	js->y.val = js->x.invert ? -valSumY : valSumY;
+	js->y.val = js->y.invert ? -valSumY : valSumY;
 }

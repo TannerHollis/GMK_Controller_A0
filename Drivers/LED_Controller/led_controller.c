@@ -37,6 +37,10 @@ LED_Controller_HandleTypeDef LED_Controller_Init(TIM_HandleTypeDef *update_timer
 		lc.leds[i].g = 0;
 		lc.leds[i].b = 0;
 	}
+	lc.debugLED = 0;
+	lc.logoLED.r = 0;
+	lc.logoLED.g = 0;
+	lc.logoLED.b = 0;
 	lc.progress_bar = 0;
 	lc.progress_bar_val = 0;
 	lc.nOE_channel = nOE_channel;

@@ -42,7 +42,7 @@
 /** @brief When set to 0, no SerialNumber is readable by the host.
  * Otherwise the SerialNumber will be converted from USBD_SERIAL_BCD_SIZE / 2
  * amount of raw bytes to string BCD format and sent to the host. */
-#define USBD_SERIAL_BCD_SIZE        0
+#define USBD_SERIAL_BCD_SIZE        12
 
 /** @brief Selects which Microsoft OS descriptor specification should be used (if any).
  * Supported values are: 0, 1, 2
