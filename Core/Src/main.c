@@ -822,6 +822,8 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
 	}
 }
 
+#define BUF_LEN 128
+uint8_t index = 0;
 RotaryEncoder_DirectionTypeDef direction_buffer[BUF_LEN];
 RotaryEncoder_StateTypeDef state_buffer[BUF_LEN];
 int8_t direction_counts_buffer[BUF_LEN];

@@ -103,9 +103,9 @@ void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re){
 	RotaryEncoder_CalculateLinearPosition(re);
 
 	//Calculate updated
-	if(re->dpr == 1)
+	if(re->dpp == 1)
 		re->steps.complete = re->direction_counts >= 3;
-	else if(re->dpr == 2)
+	else if(re->dpp == 2)
 		re->steps.complete = re->direction_counts >= 1;
 	else
 		re->steps.complete = re->direction_counts >= 1;
