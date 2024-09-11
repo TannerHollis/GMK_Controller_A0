@@ -64,7 +64,9 @@ typedef struct{
 		uint8_t complete;
 	} steps;
 
-	float ppr;
+	float ppr;		// Pulses per revolution
+	float dpr; 		// Detents per revolution
+	uint8_t dpp; 	// Detents per pulse
 	float speed_rpm;
 	float speed_hz;
 	float timer_freq;
@@ -73,7 +75,7 @@ typedef struct{
 	int8_t direction_counts;
 } RotaryEncoder_HandleTypeDef;
 
-RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin, float pulses_per_revolution, float timer_freq, uint8_t invert);
+RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin, float pulses_per_revolution, float detents_per_pulse, float timer_freq, uint8_t invert);
 RotaryEncoder_StateTypeDef RotaryEncoder_GetState(RotaryEncoder_HandleTypeDef *re);
 void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re);
 RotaryEncoder_DirectionTypeDef RotaryEncoder_GetDirection(RotaryEncoder_StateTypeDef state, RotaryEncoder_StateTypeDef last_state);

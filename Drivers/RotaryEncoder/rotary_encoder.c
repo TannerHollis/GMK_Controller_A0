@@ -29,7 +29,7 @@
   *
   * @retval Returns the RotaryEncoder object
   */
-RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin, float pulses_per_revolution, float timer_freq, uint8_t invert)
+RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin, float pulses_per_revolution, float detents_per_revolution, float timer_freq, uint8_t invert)
 {
 	RotaryEncoder_HandleTypeDef re;
 	re.update_tim = htim;
@@ -44,6 +44,8 @@ RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_Typ
 	re.steps.count = 0;
 	re.steps.count_buffer = 0;
 	re.ppr = pulses_per_revolution;
+	re.dpr = detents_per_revolution;
+	re.dpp = (uint8_t)(re.dpr / re.ppr);
 	re.rotation.position = 0;
 	re.rotation.increment = 360.0f / re.ppr / 4;
 	re.linear.position = 0;
@@ -65,8 +67,8 @@ RotaryEncoder_HandleTypeDef RotaryEncoder_Init(TIM_HandleTypeDef *htim, GPIO_Typ
   * @retval Returns the RotaryEncoder state
   */
 RotaryEncoder_StateTypeDef RotaryEncoder_GetState(RotaryEncoder_HandleTypeDef *re){
-	uint8_t a_state = !HAL_GPIO_ReadPin(re->a.GPIO_Port, re->a.GPIO_Pin);
-	uint8_t b_state = !HAL_GPIO_ReadPin(re->b.GPIO_Port, re->b.GPIO_Pin);
+	uint8_t a_state = HAL_GPIO_ReadPin(re->a.GPIO_Port, re->a.GPIO_Pin);
+	uint8_t b_state = HAL_GPIO_ReadPin(re->b.GPIO_Port, re->b.GPIO_Pin);
 
 	if(!re->invert)
 		return((RotaryEncoder_StateTypeDef)(b_state << 1 | a_state));
@@ -101,7 +103,12 @@ void RotaryEncoder_Update(RotaryEncoder_HandleTypeDef *re){
 	RotaryEncoder_CalculateLinearPosition(re);
 
 	//Calculate updated
-	re->steps.complete = (re->state.current == re->state.initial) && (re->direction_counts >= 3);
+	if(re->dpr == 1)
+		re->steps.complete = re->direction_counts >= 3;
+	else if(re->dpr == 2)
+		re->steps.complete = re->direction_counts >= 1;
+	else
+		re->steps.complete = re->direction_counts >= 1;
 
 	if(re->steps.complete){
 		re->steps.count += re->direction == CLOCKWISE ? 1 : -1;
